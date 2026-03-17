@@ -83,15 +83,19 @@ async function startSession(intention) {
 
   showAmbient(intention, session.startTime);
 
-  // notify service worker
-  const channel = new BroadcastChannel('drift');
-  channel.postMessage({
+// wake up service worker then send message
+chrome.runtime.sendMessage({ type: 'ping' }, () => {
+  // ignore response, just woke it up
+  chrome.runtime.lastError; // suppress error
+  chrome.runtime.sendMessage({
     type: 'session_start',
     sessionId: session.id,
     intention,
     startTime: session.startTime,
+  }, () => {
+    chrome.runtime.lastError; // suppress error
   });
-  channel.close();
+});
 }
 
 // ── ambient indicator ─────────────────────────────────────
