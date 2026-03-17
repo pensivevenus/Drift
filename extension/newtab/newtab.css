@@ -1,0 +1,196 @@
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg: #0f0f13;
+  --surface: #1a1a24;
+  --border: rgba(255,255,255,0.08);
+  --text-primary: #f0f0f5;
+  --text-secondary: rgba(240,240,245,0.5);
+  --text-tertiary: rgba(240,240,245,0.3);
+  --accent: #6366f1;
+  --accent-dim: rgba(99,102,241,0.15);
+}
+
+@media (prefers-color-scheme: light) {
+  :root {
+    --bg: #f5f5f7;
+    --surface: #ffffff;
+    --border: rgba(0,0,0,0.08);
+    --text-primary: #0f0f13;
+    --text-secondary: rgba(15,15,19,0.5);
+    --text-tertiary: rgba(15,15,19,0.3);
+    --accent: #4f46e5;
+    --accent-dim: rgba(79,70,229,0.1);
+  }
+}
+
+html, body {
+  height: 100%;
+  background: var(--bg);
+  color: var(--text-primary);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+.container {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 32px;
+  padding: 40px;
+}
+
+.logo {
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-tertiary);
+  position: absolute;
+  top: 28px;
+  left: 32px;
+}
+
+.prompt-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  width: 100%;
+  max-width: 560px;
+}
+
+.prompt-label {
+  font-size: 15px;
+  color: var(--text-secondary);
+  letter-spacing: 0.01em;
+}
+
+.intention-input {
+  width: 100%;
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid var(--border);
+  outline: none;
+  font-size: 28px;
+  font-weight: 400;
+  color: var(--text-primary);
+  text-align: center;
+  padding: 8px 0 12px;
+  transition: border-color 0.2s;
+  caret-color: var(--accent);
+}
+
+.intention-input::placeholder {
+  color: var(--text-tertiary);
+}
+
+.intention-input:focus {
+  border-bottom-color: var(--accent);
+}
+
+.skip-link {
+  font-size: 12px;
+  color: var(--text-tertiary);
+  cursor: pointer;
+  transition: color 0.2s;
+  user-select: none;
+}
+
+.skip-link:hover {
+  color: var(--text-secondary);
+}
+
+.pills-wrap {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: center;
+  max-width: 560px;
+  min-height: 32px;
+}
+
+.pill {
+  padding: 6px 14px;
+  border-radius: 100px;
+  border: 1px solid var(--border);
+  font-size: 12px;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.15s;
+  background: transparent;
+  animation: fadeIn 0.3s ease forwards;
+  opacity: 0;
+}
+
+.pill:hover {
+  background: var(--accent-dim);
+  border-color: var(--accent);
+  color: var(--text-primary);
+}
+
+@keyframes fadeIn {
+  to { opacity: 1; }
+}
+
+/* ambient indicator */
+.ambient {
+  position: fixed;
+  bottom: 24px;
+  right: 28px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: var(--text-tertiary);
+  opacity: 0;
+  transition: opacity 0.4s;
+}
+
+.ambient.visible {
+  opacity: 1;
+}
+
+.ambient-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--accent);
+  animation: pulse 2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.4; transform: scale(0.8); }
+}
+
+.ambient-intention {
+  color: var(--text-secondary);
+  max-width: 180px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ambient-timer {
+  font-family: monospace;
+  color: var(--text-tertiary);
+}
+
+.ambient-end {
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: 100px;
+  padding: 3px 10px;
+  font-size: 11px;
+  color: var(--text-tertiary);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.ambient-end:hover {
+  border-color: var(--accent);
+  color: var(--text-primary);
+}

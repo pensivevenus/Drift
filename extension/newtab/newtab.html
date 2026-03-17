@@ -1,9 +1,38 @@
 <!doctype html>
-<html>
+<html lang="en">
   <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Drift</title>
+    <link rel="stylesheet" href="newtab.css" />
   </head>
   <body>
-    <input type="text" placeholder="what are you here to do?" autofocus />
+    <div class="container">
+      <div class="logo">Drift</div>
+
+      <div class="prompt-wrap">
+        <p class="prompt-label" id="promptLabel">what are you here to do?</p>
+        <input
+          type="text"
+          id="intentionInput"
+          class="intention-input"
+          placeholder="type your intention..."
+          autocomplete="off"
+          autofocus
+        />
+        <p class="skip-link" id="skipLink">skip — just browsing</p>
+      </div>
+
+      <div class="pills-wrap" id="pillsWrap"></div>
+    </div>
+
+    <div class="ambient" id="ambient">
+      <span class="ambient-dot" id="ambientDot"></span>
+      <span class="ambient-intention" id="ambientIntention"></span>
+      <span class="ambient-timer" id="ambientTimer"></span>
+      <button class="ambient-end" id="ambientEnd">end session</button>
+    </div>
+
+    <script type="module" src="newtab.js"></script>
   </body>
 </html>
