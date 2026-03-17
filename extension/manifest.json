@@ -1,0 +1,33 @@
+{
+  "manifest_version": 3,
+  "name": "Drift",
+  "version": "1.0.0",
+  "description": "Set your intention. Watch your focus. See the truth.",
+
+  "chrome_url_overrides": {
+    "newtab": "newtab/newtab.html"
+  },
+
+  "background": {
+    "service_worker": "background/service-worker.js",
+    "type": "module"
+  },
+
+  "content_scripts": [{
+    "matches": ["<all_urls>"],
+    "js": ["content/tracker.js"],
+    "run_at": "document_start"
+  }],
+
+  "permissions": [
+    "storage",
+    "tabs",
+    "alarms"
+  ],
+
+  "icons": {
+    "16": "assets/icon16.png",
+    "48": "assets/icon48.png",
+    "128": "assets/icon128.png"
+  }
+}
