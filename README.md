@@ -1,4 +1,4 @@
-# Drift
+# Drift ( the readme will be updated in sometime )
 
 > Set your intention. Watch your focus. See the truth.
 
