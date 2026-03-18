@@ -27,9 +27,33 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
     return true;
   }
 
-  if (msg.type === 'end_session') {
-    handleEndSession();
-    sendResponse({ status: 'ok' });
+if (msg.type === 'end_session') {
+  const sessionId = msg.sessionId;
+  handleEndSession(sessionId).then(() => {
+    chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+      if (tabs[0]) {
+        chrome.tabs.update(tabs[0].id, {
+          url: chrome.runtime.getURL(`river/river.html?id=${sessionId}`)
+        });
+      }
+    });
+  });
+  sendResponse({ status: 'ok' });
+  return true;
+}
+
+if (msg.type === 'tab_open') {
+    handleTabOpen(msg);
+    return true;
+  }
+
+  if (msg.type === 'focus') {
+    handleFocus(msg);
+    return true;
+  }
+
+  if (msg.type === 'blur') {
+    handleBlur(msg);
     return true;
   }
 
@@ -182,12 +206,12 @@ function detectDomainDrift(domain, intention, focusStart) {
 }
 
 // ── session end ───────────────────────────────────────────
-async function handleEndSession() {
-  const { active_session_id } = await chrome.storage.local.get('active_session_id');
-  if (!active_session_id) return;
-  await endSession(active_session_id);
+async function handleEndSession(sessionId) {
+  const id = sessionId || (await chrome.storage.local.get('active_session_id')).active_session_id;
+  if (!id) return;
+  await endSession(id);
   await chrome.storage.local.set({ active_session_id: null });
-  console.log('Drift session ended:', active_session_id);
+  console.log('Drift session ended:', id);
 }
 
 // ── idle detection ────────────────────────────────────────

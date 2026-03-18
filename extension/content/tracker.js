@@ -1,20 +1,26 @@
+window.__driftTrackerLoaded = true;
 const tabId = crypto.randomUUID();
-const channel = new BroadcastChannel('drift');
 
-// announce this tab exists
-channel.postMessage({
+function sendToServiceWorker(data) {
+  chrome.runtime.sendMessage(data, () => {
+    chrome.runtime.lastError;
+  });
+}
+
+sendToServiceWorker({
   type: 'tab_open',
   domain: location.hostname,
   timestamp: Date.now(),
   tabId,
 });
 
-// track focus and blur
 document.addEventListener('visibilitychange', () => {
-  channel.postMessage({
+  sendToServiceWorker({
     type: document.visibilityState === 'visible' ? 'focus' : 'blur',
     domain: location.hostname,
     timestamp: Date.now(),
     tabId,
   });
 });
+
+console.log('Drift tracker loaded on', location.hostname);

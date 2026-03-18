@@ -1,4 +1,4 @@
-import { createSession, endSession } from '../shared/session.js';
+import { createSession } from '../shared/session.js';
 import { KEYS } from '../shared/constants.js';
 
 const input = document.getElementById('intentionInput');
@@ -13,7 +13,6 @@ const ambientEnd = document.getElementById('ambientEnd');
 
 let timerInterval = null;
 
-// ── on load ──────────────────────────────────────────────
 function init() {
   checkExistingSession();
   loadRecentPills();
@@ -25,7 +24,6 @@ function checkExistingSession() {
   const startTime = localStorage.getItem(KEYS.START_TIME);
 
   if (activeId && intention) {
-    // session already running from web app or previous tab
     promptLabel.textContent = 'continuing —';
     input.value = intention;
     input.style.opacity = '0.5';
@@ -40,7 +38,6 @@ function loadRecentPills() {
   const recent = JSON.parse(raw);
   if (!recent.length) return;
 
-  // fade in pills with staggered delay
   setTimeout(() => {
     recent.forEach((text, i) => {
       const pill = document.createElement('button');
@@ -56,7 +53,6 @@ function loadRecentPills() {
   }, 300);
 }
 
-// ── session start ─────────────────────────────────────────
 input.addEventListener('keydown', async (e) => {
   if (e.key !== 'Enter') return;
   const intention = input.value.trim();
@@ -71,6 +67,17 @@ skipLink.addEventListener('click', () => {
 async function startSession(intention) {
   const session = await createSession(intention);
 
+  // write bridge keys to localStorage
+  localStorage.setItem(KEYS.ACTIVE_SESSION, session.id);
+  localStorage.setItem(KEYS.INTENTION, intention);
+  localStorage.setItem(KEYS.START_TIME, session.startTime);
+
+  // update recent intentions list
+  const raw = localStorage.getItem(KEYS.RECENT);
+  const recent = raw ? JSON.parse(raw) : [];
+  const updated = [intention, ...recent.filter(r => r !== intention)].slice(0, 5);
+  localStorage.setItem(KEYS.RECENT, JSON.stringify(updated));
+
   // update UI
   promptLabel.textContent = intention === 'free browsing'
     ? 'browsing freely —'
@@ -83,22 +90,18 @@ async function startSession(intention) {
 
   showAmbient(intention, session.startTime);
 
-// wake up service worker then send message
-chrome.runtime.sendMessage({ type: 'ping' }, () => {
-  // ignore response, just woke it up
-  chrome.runtime.lastError; // suppress error
-  chrome.runtime.sendMessage({
-    type: 'session_start',
-    sessionId: session.id,
-    intention,
-    startTime: session.startTime,
-  }, () => {
-    chrome.runtime.lastError; // suppress error
+  // wake service worker then notify
+  chrome.runtime.sendMessage({ type: 'ping' }, () => {
+    chrome.runtime.lastError;
+    chrome.runtime.sendMessage({
+      type: 'session_start',
+      sessionId: session.id,
+      intention,
+      startTime: session.startTime,
+    }, () => { chrome.runtime.lastError; });
   });
-});
 }
 
-// ── ambient indicator ─────────────────────────────────────
 function showAmbient(intention, startTime) {
   ambientIntention.textContent = intention;
   ambient.classList.add('visible');
@@ -120,17 +123,19 @@ function formatTime(ms) {
   return `${mins}:${secs}`;
 }
 
-// ── end session ───────────────────────────────────────────
-ambientEnd.addEventListener('click', async () => {
+ambientEnd.addEventListener('click', () => {
   const activeId = localStorage.getItem(KEYS.ACTIVE_SESSION);
   if (!activeId) return;
-
   clearInterval(timerInterval);
-  await endSession(activeId);
 
-  // open river map
-  const riverUrl = chrome.runtime.getURL(`river/river.html?id=${activeId}`);
-  chrome.tabs.update({ url: riverUrl });
+  localStorage.removeItem(KEYS.ACTIVE_SESSION);
+  localStorage.removeItem(KEYS.INTENTION);
+  localStorage.removeItem(KEYS.START_TIME);
+  localStorage.setItem(KEYS.SESSION_END, Date.now());
+
+  chrome.runtime.sendMessage({ type: 'end_session', sessionId: activeId }, () => {
+    chrome.runtime.lastError;
+  });
 });
 
 init();
