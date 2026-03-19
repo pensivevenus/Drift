@@ -1,0 +1,2428 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Drift Focus</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@300;400;500&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      :root {
+        --bg: #09090f;
+        --bg2: #0f1018;
+        --bg3: #161720;
+        --border: rgba(255, 255, 255, 0.07);
+        --border2: rgba(255, 255, 255, 0.13);
+        --text: #ede8df;
+        --muted: rgba(237, 232, 223, 0.5);
+        --muted2: rgba(237, 232, 223, 0.25);
+        --accent: #c8a97e;
+        --accent2: #7baaa0;
+        --red: #d4766a;
+        --green: #7aab85;
+        --purple: #9b8ec4;
+        --card: rgba(9, 9, 15, 0.72);
+        --card2: rgba(15, 16, 24, 0.88);
+        --shadow: 0 8px 40px rgba(0, 0, 0, 0.5);
+        --radius: 14px;
+      }
+      html,
+      body {
+        height: 100%;
+        overflow: hidden;
+      }
+      body {
+        font-family: "DM Sans", sans-serif;
+        font-weight: 300;
+        color: var(--text);
+        background: #09090f;
+      }
+
+      /* ── BACKGROUND ── */
+      #bg-layer {
+        position: fixed;
+        inset: 0;
+        z-index: 0;
+        background: #09090f;
+      }
+      #bg-layer img {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        opacity: 0;
+        transition: opacity 0.9s ease;
+      }
+      #bg-layer img.active {
+        opacity: 1;
+      }
+      #bg-overlay {
+        position: fixed;
+        inset: 0;
+        z-index: 1;
+        background: rgba(0, 0, 0, 0.38);
+      }
+
+      /* ── APP SHELL ── */
+      #app {
+        position: relative;
+        z-index: 2;
+        display: flex;
+        flex-direction: column;
+        height: 100vh;
+        overflow: hidden;
+      }
+
+      /* ── TOPBAR — fully transparent, floats ── */
+      #topbar {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        z-index: 20;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 1rem 1.8rem;
+        background: transparent;
+      }
+      .topbar-logo {
+        font-family: "DM Serif Display", serif;
+        font-size: 1.4rem;
+        color: var(--accent);
+        text-decoration: none;
+        letter-spacing: 0.02em;
+        text-shadow: 0 2px 16px rgba(0, 0, 0, 0.7);
+      }
+      .topbar-center {
+        position: absolute;
+        left: 50%;
+        transform: translateX(-50%);
+        display: flex;
+        gap: 0.2rem;
+        background: rgba(9, 9, 15, 0.5);
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        padding: 0.22rem;
+        backdrop-filter: blur(20px);
+      }
+      .tab-btn {
+        font-family: "DM Mono", monospace;
+        font-size: 0.7rem;
+        letter-spacing: 0.07em;
+        text-transform: uppercase;
+        padding: 0.38rem 1.1rem;
+        border-radius: 7px;
+        border: none;
+        background: transparent;
+        color: var(--muted);
+        cursor: pointer;
+        transition: all 0.2s;
+      }
+      .tab-btn.active {
+        background: var(--accent);
+        color: #09090f;
+        font-weight: 500;
+      }
+
+      /* ── MAIN ── */
+      #main {
+        flex: 1;
+        overflow: hidden;
+        position: relative;
+      }
+      .view {
+        display: none;
+        width: 100%;
+        height: 100%;
+      }
+      .view.active {
+        display: flex;
+      }
+
+      /* ══════════════════════════
+   FOCUS VIEW — right panel
+══════════════════════════ */
+      #view-pomodoro {
+        align-items: center;
+        justify-content: flex-end;
+        padding-top: 56px;
+        padding-bottom: 0;
+        padding-right: 0;
+      }
+
+      .pomo-panel {
+        width: 300px;
+        flex-shrink: 0;
+        max-height: calc(100vh - 80px);
+        overflow-y: auto;
+        padding: 0.9rem 1.1rem 1rem;
+        display: flex;
+        flex-direction: column;
+        gap: 0.7rem;
+        background: rgba(6, 6, 12, 0.82);
+        border-left: 1px solid rgba(255, 255, 255, 0.06);
+        border-top: 1px solid rgba(255, 255, 255, 0.05);
+        border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        border-radius: 16px 0 0 16px;
+        backdrop-filter: blur(28px);
+        align-self: center;
+      }
+      .pomo-panel::-webkit-scrollbar {
+        width: 3px;
+      }
+      .pomo-panel::-webkit-scrollbar-thumb {
+        background: var(--border2);
+        border-radius: 2px;
+      }
+
+      /* Mode tabs */
+      .pomo-mode-tabs {
+        display: flex;
+        gap: 0.2rem;
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid var(--border);
+        border-radius: 9px;
+        padding: 0.2rem;
+      }
+      .pomo-mode-btn {
+        flex: 1;
+        font-family: "DM Mono", monospace;
+        font-size: 0.6rem;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        padding: 0.3rem 0.3rem;
+        border-radius: 6px;
+        border: none;
+        background: transparent;
+        color: var(--muted);
+        cursor: pointer;
+        transition: all 0.2s;
+      }
+      .pomo-mode-btn.active {
+        background: var(--accent2);
+        color: #09090f;
+        font-weight: 500;
+      }
+
+      /* Ring */
+      .pomo-ring-wrap {
+        position: relative;
+        width: 170px;
+        height: 170px;
+        align-self: center;
+        flex-shrink: 0;
+      }
+      .pomo-ring-wrap svg {
+        transform: rotate(-90deg);
+      }
+      .pomo-ring-bg {
+        fill: none;
+        stroke: rgba(255, 255, 255, 0.08);
+        stroke-width: 7;
+      }
+      .pomo-ring-fg {
+        fill: none;
+        stroke: var(--accent);
+        stroke-width: 7;
+        stroke-linecap: round;
+        transition:
+          stroke-dashoffset 1s linear,
+          stroke 0.4s;
+      }
+      .pomo-time-display {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        text-align: center;
+      }
+      .pomo-time {
+        font-family: "DM Mono", monospace;
+        font-size: 2.4rem;
+        font-weight: 300;
+        letter-spacing: -0.02em;
+        line-height: 1;
+      }
+      .pomo-sublabel {
+        font-family: "DM Mono", monospace;
+        font-size: 0.6rem;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: var(--muted);
+        margin-top: 0.25rem;
+      }
+
+      /* Controls */
+      .pomo-controls {
+        display: flex;
+        gap: 0.5rem;
+        align-items: center;
+        justify-content: center;
+      }
+      .pomo-btn {
+        height: 36px;
+        padding: 0 1rem;
+        border-radius: 8px;
+        border: 1px solid var(--border);
+        background: rgba(255, 255, 255, 0.05);
+        color: var(--text);
+        cursor: pointer;
+        font-family: "DM Mono", monospace;
+        font-size: 0.68rem;
+        letter-spacing: 0.05em;
+        text-transform: uppercase;
+        transition: all 0.2s;
+        display: flex;
+        align-items: center;
+        gap: 0.3rem;
+        backdrop-filter: blur(8px);
+      }
+      .pomo-btn:hover {
+        background: rgba(255, 255, 255, 0.1);
+        border-color: var(--border2);
+      }
+      .pomo-btn.primary {
+        background: var(--accent);
+        color: #09090f;
+        border-color: var(--accent);
+        font-weight: 500;
+      }
+      .pomo-btn.primary:hover {
+        background: #d4b88e;
+      }
+      .pomo-btn.danger {
+        border-color: rgba(212, 118, 106, 0.3);
+        color: var(--red);
+      }
+      .pomo-btn.danger:hover {
+        background: rgba(212, 118, 106, 0.1);
+      }
+
+      /* Stats row */
+      .pomo-stats-row {
+        display: flex;
+        gap: 0;
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        overflow: hidden;
+      }
+      .pomo-stat {
+        flex: 1;
+        text-align: center;
+        padding: 0.6rem 0.4rem;
+        border-right: 1px solid var(--border);
+      }
+      .pomo-stat:last-child {
+        border-right: none;
+      }
+      .pomo-stat-val {
+        font-family: "DM Mono", monospace;
+        font-size: 1.1rem;
+        color: var(--accent);
+        line-height: 1;
+      }
+      .pomo-stat-label {
+        font-family: "DM Mono", monospace;
+        font-size: 0.55rem;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        color: var(--muted);
+        margin-top: 0.2rem;
+      }
+
+      /* Intention */
+      .pomo-intention {
+        background: rgba(255, 255, 255, 0.04);
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        padding: 0.7rem 0.9rem;
+      }
+      .intention-label {
+        font-family: "DM Mono", monospace;
+        font-size: 0.58rem;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: var(--muted);
+        margin-bottom: 0.3rem;
+      }
+      .intention-input {
+        background: transparent;
+        border: none;
+        outline: none;
+        width: 100%;
+        font-family: "DM Sans", sans-serif;
+        font-size: 0.88rem;
+        color: var(--text);
+      }
+      .intention-input::placeholder {
+        color: var(--muted2);
+      }
+
+      /* Sound panel */
+      .sound-panel {
+        background: rgba(255, 255, 255, 0.04);
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        padding: 0.7rem 0.9rem;
+      }
+      .sound-panel-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 0.6rem;
+      }
+      .sound-panel-title {
+        font-family: "DM Mono", monospace;
+        font-size: 0.58rem;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: var(--muted);
+      }
+      .sound-btns {
+        display: flex;
+        gap: 0.35rem;
+        flex-wrap: wrap;
+      }
+      .sound-btn {
+        font-family: "DM Mono", monospace;
+        font-size: 0.62rem;
+        padding: 0.25rem 0.6rem;
+        border-radius: 6px;
+        border: 1px solid var(--border);
+        background: transparent;
+        color: var(--muted);
+        cursor: pointer;
+        transition: all 0.2s;
+      }
+      .sound-btn:hover {
+        border-color: var(--border2);
+        color: var(--text);
+      }
+      .sound-btn.active {
+        background: var(--accent2);
+        border-color: var(--accent2);
+        color: #09090f;
+        font-weight: 500;
+      }
+      .volume-row {
+        display: flex;
+        align-items: center;
+        gap: 0.6rem;
+        margin-top: 0.5rem;
+      }
+      .volume-row label {
+        font-family: "DM Mono", monospace;
+        font-size: 0.6rem;
+        color: var(--muted);
+        white-space: nowrap;
+      }
+      input[type="range"] {
+        flex: 1;
+        accent-color: var(--accent);
+        cursor: pointer;
+      }
+
+      /* Custom durations */
+      .pomo-custom {
+        background: rgba(255, 255, 255, 0.04);
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        padding: 0.7rem 0.9rem;
+      }
+      .pomo-custom-title {
+        font-family: "DM Mono", monospace;
+        font-size: 0.58rem;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: var(--muted);
+        margin-bottom: 0.6rem;
+      }
+      .custom-row {
+        display: flex;
+        gap: 0.6rem;
+      }
+      .custom-field {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        gap: 0.25rem;
+      }
+      .custom-field label {
+        font-family: "DM Mono", monospace;
+        font-size: 0.58rem;
+        color: var(--muted);
+      }
+      .custom-field input {
+        background: rgba(255, 255, 255, 0.06);
+        border: 1px solid var(--border);
+        border-radius: 6px;
+        padding: 0.35rem 0.5rem;
+        color: var(--text);
+        font-family: "DM Mono", monospace;
+        font-size: 0.82rem;
+        width: 100%;
+        transition: border-color 0.2s;
+        text-align: center;
+      }
+      .custom-field input:focus {
+        outline: none;
+        border-color: var(--accent);
+      }
+
+      /* ══════════════════════════
+   TASKS VIEW
+══════════════════════════ */
+      #view-tasks {
+        flex-direction: column;
+        padding: 4.5rem 1.5rem 1.2rem;
+        overflow-y: auto;
+        gap: 0.9rem;
+      }
+      #view-tasks::-webkit-scrollbar {
+        width: 4px;
+      }
+      #view-tasks::-webkit-scrollbar-thumb {
+        background: var(--border2);
+        border-radius: 2px;
+      }
+
+      .tasks-toolbar {
+        display: flex;
+        gap: 0.5rem;
+        align-items: center;
+        flex-wrap: wrap;
+        flex-shrink: 0;
+      }
+      .search-wrap {
+        flex: 1;
+        min-width: 160px;
+        position: relative;
+      }
+      .search-wrap svg {
+        position: absolute;
+        left: 0.65rem;
+        top: 50%;
+        transform: translateY(-50%);
+        color: var(--muted);
+        pointer-events: none;
+      }
+      #task-search {
+        width: 100%;
+        background: rgba(9, 9, 15, 0.7);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        padding: 0.48rem 0.8rem 0.48rem 2rem;
+        color: var(--text);
+        font-family: "DM Sans", sans-serif;
+        font-size: 0.85rem;
+        backdrop-filter: blur(12px);
+        transition: border-color 0.2s;
+      }
+      #task-search:focus {
+        outline: none;
+        border-color: var(--accent2);
+      }
+      #task-search::placeholder {
+        color: var(--muted2);
+      }
+      .filter-select {
+        background: rgba(9, 9, 15, 0.7);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        padding: 0.48rem 0.65rem;
+        color: var(--text);
+        font-family: "DM Mono", monospace;
+        font-size: 0.68rem;
+        cursor: pointer;
+        backdrop-filter: blur(12px);
+      }
+      .filter-select:focus {
+        outline: none;
+        border-color: var(--accent2);
+      }
+      .add-task-btn {
+        display: flex;
+        align-items: center;
+        gap: 0.35rem;
+        background: var(--accent);
+        color: #09090f;
+        border: none;
+        border-radius: 8px;
+        padding: 0.48rem 1rem;
+        font-family: "DM Mono", monospace;
+        font-size: 0.68rem;
+        letter-spacing: 0.05em;
+        text-transform: uppercase;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.2s;
+        white-space: nowrap;
+      }
+      .add-task-btn:hover {
+        background: #d4b88e;
+        transform: translateY(-1px);
+      }
+
+      /* Progress */
+      .progress-bar-wrap {
+        flex-shrink: 0;
+      }
+      .progress-header {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 0.35rem;
+      }
+      .progress-label {
+        font-family: "DM Mono", monospace;
+        font-size: 0.62rem;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--muted);
+      }
+      .progress-pct {
+        font-family: "DM Mono", monospace;
+        font-size: 0.65rem;
+        color: var(--accent);
+      }
+      .progress-track {
+        height: 3px;
+        background: var(--border2);
+        border-radius: 2px;
+        overflow: hidden;
+      }
+      .progress-fill {
+        height: 100%;
+        background: linear-gradient(90deg, var(--accent2), var(--accent));
+        border-radius: 2px;
+        transition: width 0.5s ease;
+      }
+
+      /* Task list */
+      .tasks-list {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        gap: 0.45rem;
+      }
+      .task-item {
+        background: rgba(9, 9, 15, 0.68);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 0.7rem 0.9rem;
+        cursor: default;
+        transition: all 0.2s;
+        backdrop-filter: blur(12px);
+        animation: taskIn 0.22s ease;
+      }
+      @keyframes taskIn {
+        from {
+          opacity: 0;
+          transform: translateY(-6px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+      .task-item:hover {
+        border-color: var(--border2);
+        background: rgba(15, 16, 24, 0.82);
+      }
+      .task-item.completed {
+        opacity: 0.5;
+      }
+      .task-item.pinned {
+        border-left: 3px solid var(--accent);
+      }
+      .task-item.starred {
+        border-left: 3px solid var(--purple);
+      }
+      .task-item.overdue .task-title {
+        color: var(--red);
+      }
+      .task-main {
+        display: flex;
+        align-items: flex-start;
+        gap: 0.65rem;
+      }
+      .drag-handle {
+        color: var(--muted2);
+        cursor: grab;
+        font-size: 0.75rem;
+        flex-shrink: 0;
+        align-self: center;
+        padding: 0 0.1rem;
+      }
+      .drag-handle:active {
+        cursor: grabbing;
+      }
+      .task-check {
+        width: 17px;
+        height: 17px;
+        border-radius: 5px;
+        border: 1.5px solid var(--border2);
+        background: transparent;
+        cursor: pointer;
+        flex-shrink: 0;
+        margin-top: 0.12rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.2s;
+      }
+      .task-check:hover {
+        border-color: var(--accent2);
+      }
+      .task-item.completed .task-check {
+        background: var(--accent2);
+        border-color: var(--accent2);
+      }
+      .task-body {
+        flex: 1;
+        min-width: 0;
+      }
+      .task-title-row {
+        display: flex;
+        align-items: center;
+        gap: 0.4rem;
+        flex-wrap: wrap;
+      }
+      .task-title {
+        font-size: 0.88rem;
+        line-height: 1.4;
+        word-break: break-word;
+      }
+      .task-item.completed .task-title {
+        text-decoration: line-through;
+        color: var(--muted);
+      }
+      .task-badge {
+        font-family: "DM Mono", monospace;
+        font-size: 0.57rem;
+        letter-spacing: 0.05em;
+        text-transform: uppercase;
+        padding: 0.12rem 0.38rem;
+        border-radius: 4px;
+        flex-shrink: 0;
+      }
+      .priority-high {
+        background: rgba(212, 118, 106, 0.15);
+        color: var(--red);
+      }
+      .priority-medium {
+        background: rgba(200, 169, 126, 0.15);
+        color: var(--accent);
+      }
+      .priority-low {
+        background: rgba(123, 170, 160, 0.15);
+        color: var(--accent2);
+      }
+      .cat-badge {
+        background: rgba(155, 142, 196, 0.15);
+        color: var(--purple);
+      }
+      .task-meta {
+        display: flex;
+        gap: 0.6rem;
+        margin-top: 0.25rem;
+        flex-wrap: wrap;
+      }
+      .task-meta-item {
+        font-family: "DM Mono", monospace;
+        font-size: 0.6rem;
+        color: var(--muted2);
+      }
+      .task-meta-item.overdue {
+        color: var(--red);
+      }
+      .task-actions {
+        display: flex;
+        gap: 0.2rem;
+        flex-shrink: 0;
+        opacity: 0;
+        transition: opacity 0.15s;
+      }
+      .task-item:hover .task-actions {
+        opacity: 1;
+      }
+      .task-action-btn {
+        width: 24px;
+        height: 24px;
+        border-radius: 5px;
+        border: none;
+        background: transparent;
+        color: var(--muted);
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.15s;
+        font-size: 0.72rem;
+      }
+      .task-action-btn:hover {
+        background: rgba(255, 255, 255, 0.07);
+        color: var(--text);
+      }
+
+      /* Subtasks */
+      .subtasks {
+        margin-top: 0.5rem;
+        padding-top: 0.5rem;
+        border-top: 1px solid var(--border);
+        display: flex;
+        flex-direction: column;
+        gap: 0.28rem;
+      }
+      .subtask-item {
+        display: flex;
+        align-items: center;
+        gap: 0.45rem;
+        font-size: 0.78rem;
+        color: var(--muted);
+      }
+      .subtask-check {
+        width: 13px;
+        height: 13px;
+        border-radius: 3px;
+        border: 1.5px solid var(--border2);
+        background: transparent;
+        cursor: pointer;
+        flex-shrink: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.15s;
+      }
+      .subtask-item.done .subtask-check {
+        background: var(--accent2);
+        border-color: var(--accent2);
+      }
+      .subtask-item.done span {
+        text-decoration: line-through;
+        opacity: 0.55;
+      }
+      .add-subtask-row {
+        display: flex;
+        gap: 0.35rem;
+        margin-top: 0.35rem;
+      }
+      .add-subtask-input {
+        flex: 1;
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid var(--border);
+        border-radius: 5px;
+        padding: 0.22rem 0.45rem;
+        font-size: 0.75rem;
+        color: var(--text);
+        font-family: "DM Sans", sans-serif;
+      }
+      .add-subtask-input:focus {
+        outline: none;
+        border-color: var(--accent2);
+      }
+      .add-subtask-btn {
+        background: var(--accent2);
+        border: none;
+        border-radius: 5px;
+        padding: 0.22rem 0.55rem;
+        font-size: 0.72rem;
+        color: #09090f;
+        cursor: pointer;
+        font-weight: 500;
+      }
+
+      /* Streak banner */
+      .streak-banner {
+        display: flex;
+        align-items: center;
+        gap: 0.65rem;
+        background: rgba(9, 9, 15, 0.65);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 0.65rem 0.9rem;
+        flex-shrink: 0;
+        backdrop-filter: blur(12px);
+      }
+      .streak-text {
+        font-family: "DM Mono", monospace;
+        font-size: 0.65rem;
+        color: var(--muted);
+      }
+      .streak-count {
+        font-family: "DM Mono", monospace;
+        font-size: 0.95rem;
+        color: var(--accent);
+        font-weight: 500;
+      }
+
+      /* ── TASK FORM MODAL ── */
+      .task-form-overlay {
+        position: fixed;
+        inset: 0;
+        z-index: 200;
+        background: rgba(0, 0, 0, 0.65);
+        backdrop-filter: blur(6px);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 1rem;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.22s;
+      }
+      .task-form-overlay.open {
+        opacity: 1;
+        pointer-events: all;
+      }
+      .task-form {
+        background: #0f1018;
+        border: 1px solid var(--border2);
+        border-radius: 16px;
+        padding: 1.6rem;
+        width: 100%;
+        max-width: 480px;
+        transform: translateY(16px);
+        transition: transform 0.22s;
+        max-height: 90vh;
+        overflow-y: auto;
+      }
+      .task-form-overlay.open .task-form {
+        transform: translateY(0);
+      }
+      .task-form h3 {
+        font-family: "DM Serif Display", serif;
+        font-size: 1.25rem;
+        font-weight: 400;
+        margin-bottom: 1rem;
+      }
+      .form-group {
+        display: flex;
+        flex-direction: column;
+        gap: 0.3rem;
+        margin-bottom: 0.8rem;
+      }
+      .form-group label {
+        font-family: "DM Mono", monospace;
+        font-size: 0.62rem;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--muted);
+      }
+      .form-input {
+        background: var(--bg3);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        padding: 0.55rem 0.75rem;
+        color: var(--text);
+        font-family: "DM Sans", sans-serif;
+        font-size: 0.88rem;
+        transition: border-color 0.2s;
+        width: 100%;
+      }
+      .form-input:focus {
+        outline: none;
+        border-color: var(--accent);
+      }
+      .form-row {
+        display: flex;
+        gap: 0.7rem;
+      }
+      .form-row .form-group {
+        flex: 1;
+      }
+      .form-actions {
+        display: flex;
+        gap: 0.5rem;
+        justify-content: flex-end;
+        margin-top: 1rem;
+      }
+      .form-btn {
+        font-family: "DM Mono", monospace;
+        font-size: 0.68rem;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        padding: 0.55rem 1.1rem;
+        border-radius: 7px;
+        border: 1px solid var(--border);
+        background: transparent;
+        color: var(--muted);
+        cursor: pointer;
+        transition: all 0.2s;
+      }
+      .form-btn:hover {
+        background: var(--bg3);
+        color: var(--text);
+      }
+      .form-btn.primary {
+        background: var(--accent);
+        color: #09090f;
+        border-color: var(--accent);
+        font-weight: 500;
+      }
+      .form-btn.primary:hover {
+        background: #d4b88e;
+      }
+
+      /* ── UNDO TOAST ── */
+      .undo-toast {
+        position: fixed;
+        bottom: 1.5rem;
+        left: 50%;
+        transform: translateX(-50%) translateY(70px);
+        background: #161720;
+        border: 1px solid var(--border2);
+        border-radius: 8px;
+        padding: 0.55rem 1.1rem;
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        font-family: "DM Mono", monospace;
+        font-size: 0.72rem;
+        color: var(--text);
+        z-index: 300;
+        transition: transform 0.28s ease;
+        box-shadow: var(--shadow);
+      }
+      .undo-toast.show {
+        transform: translateX(-50%) translateY(0);
+      }
+      .undo-btn {
+        background: var(--accent);
+        border: none;
+        border-radius: 5px;
+        padding: 0.2rem 0.55rem;
+        font-size: 0.68rem;
+        color: #09090f;
+        cursor: pointer;
+        font-weight: 500;
+        font-family: "DM Mono", monospace;
+      }
+
+      /* Drag states */
+      .task-item.dragging {
+        opacity: 0.35;
+        border-style: dashed;
+      }
+      .task-item.drag-over {
+        border-color: var(--accent2);
+        background: rgba(123, 170, 160, 0.07);
+      }
+
+      /* BG hint */
+      .bg-hint {
+        position: fixed;
+        bottom: 1rem;
+        right: 1rem;
+        z-index: 10;
+        font-family: "DM Mono", monospace;
+        font-size: 0.58rem;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: rgba(237, 232, 223, 0.25);
+        background: rgba(9, 9, 15, 0.5);
+        border: 1px solid var(--border);
+        padding: 0.28rem 0.55rem;
+        border-radius: 5px;
+        pointer-events: none;
+        opacity: 0;
+        animation: hintFade 5s ease 1.5s forwards;
+      }
+      @keyframes hintFade {
+        0% {
+          opacity: 0;
+        }
+        15% {
+          opacity: 1;
+        }
+        70% {
+          opacity: 1;
+        }
+        100% {
+          opacity: 0;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <!-- BACKGROUNDS — generated by JS from BACKGROUNDS array -->
+    <div id="bg-layer"></div>
+    <div id="bg-overlay"></div>
+
+    <div id="app">
+      <!-- TOPBAR — transparent, floats over GIF -->
+      <div id="topbar">
+        <a href="index.html" class="topbar-logo">Drift</a>
+        <div class="topbar-center">
+          <button
+            class="tab-btn active"
+            data-view="pomodoro"
+            onclick="switchView('pomodoro', this)"
+          >
+            ⏱ Focus
+          </button>
+          <button
+            class="tab-btn"
+            data-view="tasks"
+            onclick="switchView('tasks', this)"
+          >
+            ✓ Tasks
+          </button>
+        </div>
+        <!-- no extra buttons -->
+      </div>
+
+      <div id="main">
+        <!-- ══ FOCUS VIEW ══ -->
+        <div id="view-pomodoro" class="view active">
+          <!-- Left: empty so GIF is visible -->
+          <div style="flex: 1"></div>
+
+          <!-- Right: slim control panel -->
+          <div class="pomo-panel">
+            <div class="pomo-mode-tabs">
+              <button
+                class="pomo-mode-btn active"
+                onclick="setMode('work', this)"
+              >
+                Work
+              </button>
+              <button class="pomo-mode-btn" onclick="setMode('break', this)">
+                Short
+              </button>
+              <button class="pomo-mode-btn" onclick="setMode('long', this)">
+                Long
+              </button>
+            </div>
+
+            <div class="pomo-ring-wrap">
+              <svg width="170" height="170" viewBox="0 0 170 170">
+                <circle class="pomo-ring-bg" cx="85" cy="85" r="74" />
+                <circle
+                  class="pomo-ring-fg"
+                  id="pomo-ring"
+                  cx="85"
+                  cy="85"
+                  r="74"
+                  stroke-dasharray="464.96"
+                  stroke-dashoffset="0"
+                />
+              </svg>
+              <div class="pomo-time-display">
+                <div class="pomo-time" id="pomo-time">25:00</div>
+                <div class="pomo-sublabel" id="pomo-label">focus</div>
+              </div>
+            </div>
+
+            <div class="pomo-controls">
+              <button class="pomo-btn" onclick="resetTimer()">↺</button>
+              <button
+                class="pomo-btn primary"
+                id="pomo-start-btn"
+                onclick="toggleTimer()"
+              >
+                ▶ Start
+              </button>
+              <button class="pomo-btn danger" onclick="skipSession()">
+                ⏭
+              </button>
+            </div>
+
+            <div class="pomo-stats-row">
+              <div class="pomo-stat">
+                <div class="pomo-stat-val" id="stat-pomos">0</div>
+                <div class="pomo-stat-label">pomos</div>
+              </div>
+              <div class="pomo-stat">
+                <div class="pomo-stat-val" id="stat-minutes">0</div>
+                <div class="pomo-stat-label">min</div>
+              </div>
+              <div class="pomo-stat">
+                <div class="pomo-stat-val" id="stat-streak">0</div>
+                <div class="pomo-stat-label">streak</div>
+              </div>
+            </div>
+
+            <div class="pomo-intention">
+              <div class="intention-label">Intention</div>
+              <input
+                class="intention-input"
+                id="intention-input"
+                placeholder="What are you working on?"
+                oninput="saveIntention()"
+              />
+            </div>
+
+            <div class="sound-panel">
+              <div class="sound-panel-header">
+                <span class="sound-panel-title">🎵 Ambient</span>
+                <button
+                  class="sound-btn"
+                  id="sound-off-btn"
+                  onclick="toggleSound()"
+                  style="font-size: 0.58rem; padding: 0.18rem 0.45rem"
+                >
+                  off
+                </button>
+              </div>
+              <div class="sound-btns">
+                <button class="sound-btn" onclick="selectSound('rain', this)">
+                  🌧 Rain
+                </button>
+                <button class="sound-btn" onclick="selectSound('forest', this)">
+                  🌿 Forest
+                </button>
+                <button class="sound-btn" onclick="selectSound('ocean', this)">
+                  🌊 Ocean
+                </button>
+                <button class="sound-btn" onclick="selectSound('lofi', this)">
+                  🎵 Lo-fi
+                </button>
+                <button class="sound-btn" onclick="selectSound('white', this)">
+                  ◎ White
+                </button>
+                <button class="sound-btn" onclick="selectSound('cafe', this)">
+                  ☕ Cafe
+                </button>
+              </div>
+              <div class="volume-row">
+                <label>Vol</label>
+                <input
+                  type="range"
+                  id="volume-slider"
+                  min="0"
+                  max="1"
+                  step="0.05"
+                  value="0.4"
+                  oninput="setVolume(this.value)"
+                />
+              </div>
+            </div>
+
+            <div class="pomo-custom">
+              <div class="pomo-custom-title">Custom Durations (min)</div>
+              <div class="custom-row">
+                <div class="custom-field">
+                  <label>Work</label>
+                  <input
+                    type="number"
+                    id="custom-work"
+                    min="1"
+                    max="120"
+                    value="25"
+                    oninput="updateCustom()"
+                  />
+                </div>
+                <div class="custom-field">
+                  <label>Short</label>
+                  <input
+                    type="number"
+                    id="custom-short"
+                    min="1"
+                    max="60"
+                    value="5"
+                    oninput="updateCustom()"
+                  />
+                </div>
+                <div class="custom-field">
+                  <label>Long</label>
+                  <input
+                    type="number"
+                    id="custom-long"
+                    min="1"
+                    max="60"
+                    value="15"
+                    oninput="updateCustom()"
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ══ TASKS VIEW ══ -->
+        <div id="view-tasks" class="view">
+          <div class="streak-banner">
+            <span style="font-size: 1.1rem">🔥</span>
+            <span class="streak-text">Streak</span>
+            <span class="streak-count" id="streak-display">0 days</span>
+            <span
+              class="streak-text"
+              style="margin-left: auto"
+              id="tasks-done-today"
+              >0 done today</span
+            >
+          </div>
+
+          <div class="tasks-toolbar">
+            <div class="search-wrap">
+              <svg
+                width="13"
+                height="13"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+              >
+                <circle cx="11" cy="11" r="8" />
+                <path d="m21 21-4.35-4.35" />
+              </svg>
+              <input
+                id="task-search"
+                placeholder="Search tasks…"
+                oninput="renderTasks()"
+              />
+            </div>
+            <select
+              class="filter-select"
+              id="filter-status"
+              onchange="renderTasks()"
+            >
+              <option value="all">All</option>
+              <option value="pending">Pending</option>
+              <option value="completed">Done</option>
+            </select>
+            <select
+              class="filter-select"
+              id="filter-cat"
+              onchange="renderTasks()"
+            >
+              <option value="all">All cats</option>
+              <option value="work">Work</option>
+              <option value="school">School</option>
+              <option value="personal">Personal</option>
+            </select>
+            <select
+              class="filter-select"
+              id="filter-priority"
+              onchange="renderTasks()"
+            >
+              <option value="all">All priority</option>
+              <option value="high">High</option>
+              <option value="medium">Medium</option>
+              <option value="low">Low</option>
+            </select>
+            <select class="filter-select" id="sort-by" onchange="renderTasks()">
+              <option value="created">Created</option>
+              <option value="due">Due date</option>
+              <option value="priority">Priority</option>
+            </select>
+            <button class="add-task-btn" onclick="openTaskForm()">+ Add</button>
+            <button
+              class="add-task-btn"
+              style="
+                background: rgba(255, 255, 255, 0.08);
+                color: var(--muted);
+                font-size: 0.62rem;
+              "
+              onclick="exportTasks()"
+              title="Export JSON"
+            >
+              ↓ Export
+            </button>
+            <button
+              class="add-task-btn"
+              style="
+                background: rgba(255, 255, 255, 0.08);
+                color: var(--muted);
+                font-size: 0.62rem;
+              "
+              onclick="document.getElementById('import-file').click()"
+              title="Import JSON"
+            >
+              ↑ Import
+            </button>
+            <input
+              type="file"
+              id="import-file"
+              accept=".txt,.json"
+              style="display: none"
+              onchange="importTasks(event)"
+            />
+          </div>
+
+          <div class="progress-bar-wrap">
+            <div class="progress-header">
+              <span class="progress-label">Progress</span>
+              <span class="progress-pct" id="progress-pct">0%</span>
+            </div>
+            <div class="progress-track">
+              <div
+                class="progress-fill"
+                id="progress-fill"
+                style="width: 0%"
+              ></div>
+            </div>
+          </div>
+
+          <div class="tasks-list" id="tasks-list"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TASK FORM -->
+    <div
+      class="task-form-overlay"
+      id="task-form-overlay"
+      onclick="handleOverlayClick(event)"
+    >
+      <div class="task-form">
+        <h3 id="form-title">New Task</h3>
+        <div class="form-group">
+          <label>Title *</label>
+          <input
+            class="form-input"
+            id="form-task-title"
+            placeholder="What needs to be done?"
+            maxlength="200"
+          />
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Category</label>
+            <select class="form-input" id="form-cat">
+              <option value="personal">Personal</option>
+              <option value="work">Work</option>
+              <option value="school">School</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Priority</label>
+            <select class="form-input" id="form-priority">
+              <option value="medium">Medium</option>
+              <option value="high">High</option>
+              <option value="low">Low</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Due date</label>
+          <input type="date" class="form-input" id="form-due" />
+        </div>
+        <div class="form-group">
+          <label>Notes</label>
+          <input
+            class="form-input"
+            id="form-notes"
+            placeholder="Optional notes…"
+          />
+        </div>
+        <div class="form-actions">
+          <button class="form-btn" onclick="closeTaskForm()">Cancel</button>
+          <button class="form-btn primary" onclick="saveTask()">Save</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- UNDO TOAST -->
+    <div class="undo-toast" id="undo-toast">
+      Task deleted <button class="undo-btn" onclick="undoDelete()">Undo</button>
+    </div>
+
+    <div class="bg-hint">Space = next background</div>
+
+    <script>
+      // ════════════════════════════════════
+      // BACKGROUNDS — just add new paths here
+      // ════════════════════════════════════
+      const BACKGROUNDS = [
+        "assets/backgrounds/1st.gif",
+        "assets/backgrounds/2nd.gif",
+        "assets/backgrounds/3rd.gif",
+        "assets/backgrounds/4th.gif",
+        "assets/backgrounds/5th.gif",
+        "assets/backgrounds/6th.gif",
+        "assets/backgrounds/7th.gif",
+        "assets/backgrounds/8th.gif",
+        "assets/backgrounds/9th.gif",
+        "assets/backgrounds/10th.gif",
+        "assets/backgrounds/11th.gif",
+        "assets/backgrounds/12th.gif",
+        "assets/backgrounds/13th.gif",
+        "assets/backgrounds/14th.gif",
+        "assets/backgrounds/15th.gif",
+        "assets/backgrounds/16th.gif",
+        "assets/backgrounds/17th.gif",
+        "assets/backgrounds/18th.gif",
+        "assets/backgrounds/19th.gif",
+        "assets/backgrounds/20th.gif",
+        // 'assets/backgrounds/11th.gif',  ← add more here
+      ];
+
+      // ════════════════════════════════════
+      // STATE
+      // ════════════════════════════════════
+      let tasks = JSON.parse(localStorage.getItem("drift_tasks") || "[]");
+      let pomodoroStats = JSON.parse(
+        localStorage.getItem("drift_pomo_stats") || "{}",
+      );
+      let timerInterval = null,
+        timeLeft = 0,
+        totalTime = 0,
+        isRunning = false,
+        currentMode = "work";
+      let durations = { work: 25, short: 5, long: 15 };
+      const CIRC = 464.96;
+      let audioCtx = null,
+        soundNodes = [],
+        currentSound = null,
+        masterGain = null;
+      let soundVolume = parseFloat(
+        localStorage.getItem("drift_volume") || "0.4",
+      );
+      let currentBg = 0;
+      let bgImages = [];
+      let dragSrcId = null;
+      let deletedTask = null,
+        undoTimeout = null;
+      let editingTaskId = null;
+      let activeSoundBtn = null;
+
+      // ════════════════════════════════════
+      // INIT
+      // ════════════════════════════════════
+      function init() {
+        // Build background images dynamically from BACKGROUNDS array
+        const bgLayer = document.getElementById("bg-layer");
+        BACKGROUNDS.forEach((src, i) => {
+          const img = document.createElement("img");
+          img.src = src;
+          img.alt = "";
+          if (i === 0) img.classList.add("active");
+          bgLayer.appendChild(img);
+        });
+        bgImages = Array.from(bgLayer.querySelectorAll("img"));
+        loadIntention();
+        setTimerDisplay();
+        renderTasks();
+        updateStreakDisplay();
+        loadStats();
+        document.getElementById("volume-slider").value = soundVolume;
+
+        document.addEventListener("keydown", (e) => {
+          if (e.code === "Space" && !isTyping(e.target)) {
+            e.preventDefault();
+            nextBg();
+            return;
+          }
+          if (e.key === "Escape") closeTaskForm();
+          if (
+            e.key === "n" &&
+            !isTyping(e.target) &&
+            document.getElementById("view-tasks").classList.contains("active")
+          )
+            openTaskForm();
+        });
+        document.addEventListener("keydown", (e) => {
+          if (
+            e.key === "Enter" &&
+            document
+              .getElementById("task-form-overlay")
+              .classList.contains("open") &&
+            e.target.id !== "form-notes"
+          )
+            saveTask();
+        });
+      }
+      function isTyping(el) {
+        return (
+          el &&
+          (el.tagName === "INPUT" ||
+            el.tagName === "TEXTAREA" ||
+            el.tagName === "SELECT")
+        );
+      }
+
+      // ════════════════════════════════════
+      // BACKGROUND
+      // ════════════════════════════════════
+      function nextBg() {
+        const count = BACKGROUNDS.length;
+        bgImages[currentBg].classList.remove("active");
+        let n;
+        do {
+          n = Math.floor(Math.random() * count);
+        } while (n === currentBg && count > 1);
+        currentBg = n;
+        bgImages[currentBg].classList.add("active");
+      }
+
+      // ════════════════════════════════════
+      // VIEW
+      // ════════════════════════════════════
+      function switchView(name, btn) {
+        document
+          .querySelectorAll(".view")
+          .forEach((v) => v.classList.remove("active"));
+        document
+          .querySelectorAll(".tab-btn")
+          .forEach((b) => b.classList.remove("active"));
+        document.getElementById("view-" + name).classList.add("active");
+        btn.classList.add("active");
+        if (name === "tasks") renderTasks();
+      }
+
+      // ════════════════════════════════════
+      // POMODORO
+      // ════════════════════════════════════
+      function setMode(mode, btn) {
+        currentMode = mode;
+        document
+          .querySelectorAll(".pomo-mode-btn")
+          .forEach((b) => b.classList.remove("active"));
+        if (btn) btn.classList.add("active");
+        const ring = document.getElementById("pomo-ring");
+        ring.style.stroke =
+          mode === "work"
+            ? "var(--accent)"
+            : mode === "break"
+              ? "var(--accent2)"
+              : "var(--purple)";
+        if (!isRunning) setTimerDisplay();
+      }
+      function getDur(m) {
+        return m === "work"
+          ? durations.work * 60
+          : m === "break"
+            ? durations.short * 60
+            : durations.long * 60;
+      }
+      function setTimerDisplay() {
+        totalTime = getDur(currentMode);
+        timeLeft = totalTime;
+        updateDisp();
+        updateRing();
+      }
+      function updateDisp() {
+        const m = Math.floor(timeLeft / 60)
+          .toString()
+          .padStart(2, "0");
+        const s = (timeLeft % 60).toString().padStart(2, "0");
+        document.getElementById("pomo-time").textContent = `${m}:${s}`;
+        document.getElementById("pomo-label").textContent = {
+          work: "focus",
+          break: "short break",
+          long: "long break",
+        }[currentMode];
+        document.title = `${m}:${s} — Drift Focus`;
+      }
+      function updateRing() {
+        const pct = totalTime > 0 ? timeLeft / totalTime : 0;
+        document.getElementById("pomo-ring").style.strokeDashoffset =
+          CIRC * (1 - pct);
+      }
+      function toggleTimer() {
+        isRunning ? pauseTimer() : startTimer();
+      }
+      function startTimer() {
+        isRunning = true;
+        document.getElementById("pomo-start-btn").textContent = "⏸ Pause";
+        timerInterval = setInterval(() => {
+          timeLeft--;
+          updateDisp();
+          updateRing();
+          if (timeLeft <= 0) {
+            clearInterval(timerInterval);
+            isRunning = false;
+            onEnd();
+          }
+        }, 1000);
+      }
+      function pauseTimer() {
+        isRunning = false;
+        clearInterval(timerInterval);
+        document.getElementById("pomo-start-btn").textContent = "▶ Resume";
+      }
+      function resetTimer() {
+        clearInterval(timerInterval);
+        isRunning = false;
+        document.getElementById("pomo-start-btn").textContent = "▶ Start";
+        setTimerDisplay();
+        document.title = "Drift Focus";
+      }
+      function skipSession() {
+        clearInterval(timerInterval);
+        isRunning = false;
+        document.getElementById("pomo-start-btn").textContent = "▶ Start";
+        const next = currentMode === "work" ? "break" : "work";
+        const btn = document.querySelector(
+          `.pomo-mode-btn:nth-child(${next === "work" ? 1 : 2})`,
+        );
+        setMode(next, btn);
+      }
+      function onEnd() {
+        playChime();
+        document.getElementById("pomo-start-btn").textContent = "▶ Start";
+        if (currentMode === "work") {
+          const today = new Date().toDateString();
+          if (!pomodoroStats[today])
+            pomodoroStats[today] = { pomos: 0, minutes: 0 };
+          pomodoroStats[today].pomos++;
+          pomodoroStats[today].minutes += durations.work;
+          localStorage.setItem(
+            "drift_pomo_stats",
+            JSON.stringify(pomodoroStats),
+          );
+          localStorage.setItem("drift_session_end", Date.now());
+          loadStats();
+          updateStreakDisplay();
+          const b = document.querySelector(".pomo-mode-btn:nth-child(2)");
+          setMode("break", b);
+        } else {
+          const b = document.querySelector(".pomo-mode-btn:nth-child(1)");
+          setMode("work", b);
+        }
+        document.title = "Drift Focus";
+      }
+      function loadStats() {
+        const s = pomodoroStats[new Date().toDateString()] || {
+          pomos: 0,
+          minutes: 0,
+        };
+        document.getElementById("stat-pomos").textContent = s.pomos;
+        document.getElementById("stat-minutes").textContent = s.minutes;
+        document.getElementById("stat-streak").textContent = calcStreak();
+      }
+      function calcStreak() {
+        let streak = 0;
+        const d = new Date();
+        while (true) {
+          if ((pomodoroStats[d.toDateString()] || { pomos: 0 }).pomos > 0) {
+            streak++;
+            d.setDate(d.getDate() - 1);
+          } else break;
+        }
+        return streak;
+      }
+      function updateStreakDisplay() {
+        document.getElementById("streak-display").textContent =
+          calcStreak() + " days";
+        const td = tasks.filter(
+          (t) =>
+            t.completedAt &&
+            new Date(t.completedAt).toDateString() ===
+              new Date().toDateString(),
+        ).length;
+        document.getElementById("tasks-done-today").textContent =
+          td + " done today";
+      }
+      function updateCustom() {
+        const w = parseInt(document.getElementById("custom-work").value) || 25;
+        const s = parseInt(document.getElementById("custom-short").value) || 5;
+        const l = parseInt(document.getElementById("custom-long").value) || 15;
+        durations = {
+          work: Math.max(1, Math.min(120, w)),
+          short: Math.max(1, Math.min(60, s)),
+          long: Math.max(1, Math.min(60, l)),
+        };
+        if (!isRunning) setTimerDisplay();
+      }
+      function saveIntention() {
+        localStorage.setItem(
+          "drift_intention",
+          document.getElementById("intention-input").value,
+        );
+      }
+      function loadIntention() {
+        document.getElementById("intention-input").value =
+          localStorage.getItem("drift_intention") || "";
+      }
+
+      // ════════════════════════════════════
+      // AUDIO
+      // ════════════════════════════════════
+      function initAudio() {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        masterGain = audioCtx.createGain();
+        masterGain.gain.value = soundVolume;
+        masterGain.connect(audioCtx.destination);
+      }
+      function stopAllSounds() {
+        soundNodes.forEach((n) => {
+          try {
+            n.stop();
+          } catch (e) {}
+        });
+        soundNodes = [];
+      }
+      function selectSound(type, btn) {
+        document
+          .querySelectorAll(".sound-btn")
+          .forEach((b) => b.classList.remove("active"));
+        btn.classList.add("active");
+        activeSoundBtn = btn;
+        if (!audioCtx) initAudio();
+        stopAllSounds();
+        currentSound = type;
+        localStorage.setItem("drift_sound", type);
+        playAmbient(type);
+      }
+      function toggleSound() {
+        if (soundNodes.length > 0) {
+          stopAllSounds();
+          currentSound = null;
+          document
+            .querySelectorAll(".sound-btn")
+            .forEach((b) => b.classList.remove("active"));
+        }
+      }
+      function setVolume(v) {
+        soundVolume = parseFloat(v);
+        localStorage.setItem("drift_volume", soundVolume);
+        if (masterGain) masterGain.gain.value = soundVolume;
+      }
+      function playAmbient(type) {
+        if (!audioCtx) return;
+        if (type === "white") {
+          const buf = audioCtx.createBuffer(
+            1,
+            audioCtx.sampleRate * 2,
+            audioCtx.sampleRate,
+          );
+          const d = buf.getChannelData(0);
+          for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+          const src = audioCtx.createBufferSource();
+          src.buffer = buf;
+          src.loop = true;
+          const f = audioCtx.createBiquadFilter();
+          f.type = "lowpass";
+          f.frequency.value = 1200;
+          src.connect(f);
+          f.connect(masterGain);
+          src.start();
+          soundNodes.push(src);
+        } else if (type === "rain") {
+          const buf = audioCtx.createBuffer(
+            1,
+            audioCtx.sampleRate * 3,
+            audioCtx.sampleRate,
+          );
+          const d = buf.getChannelData(0);
+          for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+          const src = audioCtx.createBufferSource();
+          src.buffer = buf;
+          src.loop = true;
+          const bp = audioCtx.createBiquadFilter();
+          bp.type = "bandpass";
+          bp.frequency.value = 800;
+          bp.Q.value = 0.5;
+          const hp = audioCtx.createBiquadFilter();
+          hp.type = "highpass";
+          hp.frequency.value = 200;
+          src.connect(hp);
+          hp.connect(bp);
+          bp.connect(masterGain);
+          src.start();
+          soundNodes.push(src);
+          function drop() {
+            if (!audioCtx) return;
+            const o = audioCtx.createOscillator();
+            const g = audioCtx.createGain();
+            o.connect(g);
+            g.connect(masterGain);
+            o.frequency.value = 600 + Math.random() * 400;
+            g.gain.setValueAtTime(0.012, audioCtx.currentTime);
+            g.gain.exponentialRampToValueAtTime(
+              0.0001,
+              audioCtx.currentTime + 0.25,
+            );
+            o.start();
+            o.stop(audioCtx.currentTime + 0.25);
+            setTimeout(drop, 200 + Math.random() * 500);
+          }
+          drop();
+        } else if (type === "forest") {
+          [220, 330, 440, 550, 660].forEach((freq, i) => {
+            const o = audioCtx.createOscillator();
+            const g = audioCtx.createGain();
+            o.type = "sine";
+            o.frequency.value = freq;
+            g.gain.value = 0.01;
+            const lfo = audioCtx.createOscillator();
+            const lg = audioCtx.createGain();
+            lfo.frequency.value = 4 + i * 0.7;
+            lg.gain.value = 0.007;
+            lfo.connect(lg);
+            lg.connect(g.gain);
+            o.connect(g);
+            g.connect(masterGain);
+            lfo.start();
+            o.start();
+            soundNodes.push(o, lfo);
+          });
+          const buf = audioCtx.createBuffer(
+            1,
+            audioCtx.sampleRate * 4,
+            audioCtx.sampleRate,
+          );
+          const wd = buf.getChannelData(0);
+          for (let i = 0; i < wd.length; i++) wd[i] = Math.random() * 2 - 1;
+          const ws = audioCtx.createBufferSource();
+          ws.buffer = buf;
+          ws.loop = true;
+          const wf = audioCtx.createBiquadFilter();
+          wf.type = "lowpass";
+          wf.frequency.value = 350;
+          const wg = audioCtx.createGain();
+          wg.gain.value = 0.035;
+          ws.connect(wf);
+          wf.connect(wg);
+          wg.connect(masterGain);
+          ws.start();
+          soundNodes.push(ws);
+        } else if (type === "ocean") {
+          const buf = audioCtx.createBuffer(
+            2,
+            audioCtx.sampleRate * 4,
+            audioCtx.sampleRate,
+          );
+          for (let c = 0; c < 2; c++) {
+            const d = buf.getChannelData(c);
+            for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+          }
+          const src = audioCtx.createBufferSource();
+          src.buffer = buf;
+          src.loop = true;
+          const lp = audioCtx.createBiquadFilter();
+          lp.type = "lowpass";
+          lp.frequency.value = 550;
+          const hp = audioCtx.createBiquadFilter();
+          hp.type = "highpass";
+          hp.frequency.value = 80;
+          const lfo = audioCtx.createOscillator();
+          const lg = audioCtx.createGain();
+          lfo.frequency.value = 0.12;
+          lg.gain.value = 0.28;
+          const g = audioCtx.createGain();
+          g.gain.value = 0.55;
+          lfo.connect(lg);
+          lg.connect(g.gain);
+          src.connect(hp);
+          hp.connect(lp);
+          lp.connect(g);
+          g.connect(masterGain);
+          src.start();
+          lfo.start();
+          soundNodes.push(src, lfo);
+        } else if (type === "lofi") {
+          function beat() {
+            if (!audioCtx) return;
+            const t = audioCtx.currentTime;
+            const bpm = 72;
+            const step = 60 / bpm;
+            [0, step * 2].forEach((off) => {
+              const o = audioCtx.createOscillator();
+              const g = audioCtx.createGain();
+              o.type = "sine";
+              o.frequency.setValueAtTime(120, t + off);
+              o.frequency.exponentialRampToValueAtTime(40, t + off + 0.22);
+              g.gain.setValueAtTime(0.45, t + off);
+              g.gain.exponentialRampToValueAtTime(0.001, t + off + 0.28);
+              o.connect(g);
+              g.connect(masterGain);
+              o.start(t + off);
+              o.stop(t + off + 0.3);
+            });
+            [step, step * 3].forEach((off) => {
+              const buf = audioCtx.createBuffer(
+                1,
+                audioCtx.sampleRate * 0.18,
+                audioCtx.sampleRate,
+              );
+              const d = buf.getChannelData(0);
+              for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+              const src = audioCtx.createBufferSource();
+              src.buffer = buf;
+              const g = audioCtx.createGain();
+              g.gain.setValueAtTime(0.12, t + off);
+              g.gain.exponentialRampToValueAtTime(0.001, t + off + 0.14);
+              const f = audioCtx.createBiquadFilter();
+              f.type = "bandpass";
+              f.frequency.value = 2800;
+              src.connect(f);
+              f.connect(g);
+              g.connect(masterGain);
+              src.start(t + off);
+            });
+            [
+              [261, 329, 392],
+              [220, 277, 349],
+            ].forEach((chord, ci) => {
+              chord.forEach((freq) => {
+                const o = audioCtx.createOscillator();
+                const g = audioCtx.createGain();
+                o.type = "triangle";
+                o.frequency.value = freq / 2;
+                g.gain.setValueAtTime(0, t + ci * step * 2);
+                g.gain.linearRampToValueAtTime(0.035, t + ci * step * 2 + 0.1);
+                g.gain.linearRampToValueAtTime(
+                  0.018,
+                  t + ci * step * 2 + step * 1.8,
+                );
+                g.gain.linearRampToValueAtTime(0, t + ci * step * 2 + step * 2);
+                o.connect(g);
+                g.connect(masterGain);
+                o.start(t + ci * step * 2);
+                o.stop(t + step * 4);
+              });
+            });
+            setTimeout(beat, step * 4 * 1000);
+          }
+          beat();
+        } else if (type === "cafe") {
+          [400, 800, 1600].forEach((freq, i) => {
+            const buf = audioCtx.createBuffer(
+              1,
+              audioCtx.sampleRate * 3,
+              audioCtx.sampleRate,
+            );
+            const d = buf.getChannelData(0);
+            for (let j = 0; j < d.length; j++) d[j] = Math.random() * 2 - 1;
+            const src = audioCtx.createBufferSource();
+            src.buffer = buf;
+            src.loop = true;
+            const f = audioCtx.createBiquadFilter();
+            f.type = "bandpass";
+            f.frequency.value = freq;
+            f.Q.value = 1;
+            const g = audioCtx.createGain();
+            g.gain.value = 0.013 - i * 0.003;
+            src.connect(f);
+            f.connect(g);
+            g.connect(masterGain);
+            src.start();
+            soundNodes.push(src);
+          });
+        }
+      }
+      function playChime() {
+        if (!audioCtx) initAudio();
+        [523, 659, 784, 1047].forEach((freq, i) => {
+          const o = audioCtx.createOscillator();
+          const g = audioCtx.createGain();
+          o.type = "sine";
+          o.frequency.value = freq;
+          g.gain.setValueAtTime(0, audioCtx.currentTime + i * 0.18);
+          g.gain.linearRampToValueAtTime(
+            0.16,
+            audioCtx.currentTime + i * 0.18 + 0.05,
+          );
+          g.gain.exponentialRampToValueAtTime(
+            0.001,
+            audioCtx.currentTime + i * 0.18 + 1.1,
+          );
+          o.connect(g);
+          g.connect(audioCtx.destination);
+          o.start(audioCtx.currentTime + i * 0.18);
+          o.stop(audioCtx.currentTime + i * 0.18 + 1.2);
+        });
+      }
+
+      // ════════════════════════════════════
+      // TASKS
+      // ════════════════════════════════════
+      function saveTasks() {
+        localStorage.setItem("drift_tasks", JSON.stringify(tasks));
+      }
+      function openTaskForm(id) {
+        editingTaskId = id || null;
+        document.getElementById("form-title").textContent = id
+          ? "Edit Task"
+          : "New Task";
+        if (id) {
+          const t = tasks.find((x) => x.id === id);
+          if (t) {
+            document.getElementById("form-task-title").value = t.title;
+            document.getElementById("form-cat").value =
+              t.category || "personal";
+            document.getElementById("form-priority").value =
+              t.priority || "medium";
+            document.getElementById("form-due").value = t.due || "";
+            document.getElementById("form-notes").value = t.notes || "";
+          }
+        } else {
+          document.getElementById("form-task-title").value = "";
+          document.getElementById("form-cat").value = "personal";
+          document.getElementById("form-priority").value = "medium";
+          document.getElementById("form-due").value = "";
+          document.getElementById("form-notes").value = "";
+        }
+        document.getElementById("task-form-overlay").classList.add("open");
+        setTimeout(
+          () => document.getElementById("form-task-title").focus(),
+          80,
+        );
+      }
+      function closeTaskForm() {
+        document.getElementById("task-form-overlay").classList.remove("open");
+        editingTaskId = null;
+      }
+      function handleOverlayClick(e) {
+        if (e.target === document.getElementById("task-form-overlay"))
+          closeTaskForm();
+      }
+      function saveTask() {
+        const title = document.getElementById("form-task-title").value.trim();
+        if (!title) {
+          document.getElementById("form-task-title").focus();
+          return;
+        }
+        const cat = document.getElementById("form-cat").value;
+        const priority = document.getElementById("form-priority").value;
+        const due = document.getElementById("form-due").value;
+        const notes = document.getElementById("form-notes").value.trim();
+        if (editingTaskId) {
+          const idx = tasks.findIndex((t) => t.id === editingTaskId);
+          if (idx !== -1)
+            tasks[idx] = {
+              ...tasks[idx],
+              title,
+              category: cat,
+              priority,
+              due,
+              notes,
+            };
+        } else {
+          tasks.unshift({
+            id: Date.now().toString(),
+            title,
+            category: cat,
+            priority,
+            due,
+            notes,
+            completed: false,
+            pinned: false,
+            starred: false,
+            createdAt: Date.now(),
+            subtasks: [],
+          });
+        }
+        saveTasks();
+        closeTaskForm();
+        renderTasks();
+        updateStreakDisplay();
+      }
+      function toggleComplete(id) {
+        const t = tasks.find((x) => x.id === id);
+        if (t) {
+          t.completed = !t.completed;
+          t.completedAt = t.completed ? Date.now() : null;
+          saveTasks();
+          renderTasks();
+          updateStreakDisplay();
+        }
+      }
+      function togglePin(id) {
+        const t = tasks.find((x) => x.id === id);
+        if (t) {
+          t.pinned = !t.pinned;
+          saveTasks();
+          renderTasks();
+        }
+      }
+      function toggleStar(id) {
+        const t = tasks.find((x) => x.id === id);
+        if (t) {
+          t.starred = !t.starred;
+          saveTasks();
+          renderTasks();
+        }
+      }
+      function deleteTask(id) {
+        const idx = tasks.findIndex((t) => t.id === id);
+        if (idx === -1) return;
+        deletedTask = { task: tasks[idx], index: idx };
+        tasks.splice(idx, 1);
+        saveTasks();
+        renderTasks();
+        updateStreakDisplay();
+        showUndo();
+      }
+      function showUndo() {
+        clearTimeout(undoTimeout);
+        document.getElementById("undo-toast").classList.add("show");
+        undoTimeout = setTimeout(() => {
+          document.getElementById("undo-toast").classList.remove("show");
+          deletedTask = null;
+        }, 5000);
+      }
+      function undoDelete() {
+        if (!deletedTask) return;
+        tasks.splice(deletedTask.index, 0, deletedTask.task);
+        deletedTask = null;
+        clearTimeout(undoTimeout);
+        document.getElementById("undo-toast").classList.remove("show");
+        saveTasks();
+        renderTasks();
+      }
+      function isOverdue(t) {
+        if (!t.due || t.completed) return false;
+        const d = new Date(t.due);
+        const n = new Date();
+        n.setHours(0, 0, 0, 0);
+        return d < n;
+      }
+      function getFiltered() {
+        const q = document.getElementById("task-search").value.toLowerCase();
+        const st = document.getElementById("filter-status").value;
+        const cat = document.getElementById("filter-cat").value;
+        const pri = document.getElementById("filter-priority").value;
+        const sort = document.getElementById("sort-by").value;
+        const po = { high: 0, medium: 1, low: 2 };
+        return tasks
+          .filter((t) => {
+            if (
+              q &&
+              !t.title.toLowerCase().includes(q) &&
+              !(t.notes || "").toLowerCase().includes(q)
+            )
+              return false;
+            if (st === "pending" && t.completed) return false;
+            if (st === "completed" && !t.completed) return false;
+            if (cat !== "all" && t.category !== cat) return false;
+            if (pri !== "all" && t.priority !== pri) return false;
+            return true;
+          })
+          .sort((a, b) => {
+            if (a.pinned !== b.pinned) return a.pinned ? -1 : 1;
+            if (sort === "priority")
+              return (po[a.priority] || 1) - (po[b.priority] || 1);
+            if (sort === "due") {
+              if (!a.due && !b.due) return 0;
+              if (!a.due) return 1;
+              if (!b.due) return -1;
+              return new Date(a.due) - new Date(b.due);
+            }
+            return b.createdAt - a.createdAt;
+          });
+      }
+      function renderTasks() {
+        const list = document.getElementById("tasks-list");
+        const filtered = getFiltered();
+        const total = tasks.length,
+          done = tasks.filter((t) => t.completed).length;
+        const pct = total > 0 ? Math.round((done / total) * 100) : 0;
+        document.getElementById("progress-pct").textContent = pct + "%";
+        document.getElementById("progress-fill").style.width = pct + "%";
+        if (!filtered.length) {
+          list.innerHTML = `<div style="text-align:center;padding:3rem 1rem;color:var(--muted2);font-family:'DM Mono',monospace;font-size:0.75rem">${tasks.length === 0 ? "No tasks — press N or click + Add" : "Nothing matches your filters"}</div>`;
+          return;
+        }
+        list.innerHTML = "";
+        filtered.forEach((task) => {
+          const overdue = isOverdue(task);
+          const el = document.createElement("div");
+          el.className = `task-item${task.completed ? " completed" : ""}${task.pinned ? " pinned" : ""}${task.starred ? " starred" : ""}${overdue ? " overdue" : ""}`;
+          el.draggable = true;
+          el.dataset.id = task.id;
+          const subDone = (task.subtasks || []).filter((s) => s.done).length;
+          const subTotal = (task.subtasks || []).length;
+          el.innerHTML = `
+      <div class="task-main">
+        <div class="drag-handle">⋮⋮</div>
+        <div class="task-check" onclick="toggleComplete('${task.id}')">
+          ${task.completed ? '<svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>' : ""}
+        </div>
+        <div class="task-body">
+          <div class="task-title-row">
+            <span class="task-title">${esc(task.title)}</span>
+            <span class="task-badge priority-${task.priority}">${task.priority}</span>
+            ${task.category ? `<span class="task-badge cat-badge">${task.category}</span>` : ""}
+            ${task.starred ? '<span style="font-size:0.75rem">⭐</span>' : ""}
+            ${task.pinned ? '<span style="font-size:0.75rem">📌</span>' : ""}
+          </div>
+          ${task.notes ? `<div style="font-size:0.78rem;color:var(--muted);margin-top:0.18rem">${esc(task.notes)}</div>` : ""}
+          <div class="task-meta">
+            ${task.due ? `<span class="task-meta-item${overdue ? " overdue" : ""}">📅 ${task.due}${overdue ? " (overdue)" : ""}</span>` : ""}
+            ${subTotal > 0 ? `<span class="task-meta-item">☑ ${subDone}/${subTotal}</span>` : ""}
+          </div>
+        </div>
+        <div class="task-actions">
+          <button class="task-action-btn" onclick="togglePin('${task.id}')" title="Pin">${task.pinned ? "📌" : "📌"}</button>
+          <button class="task-action-btn" onclick="toggleStar('${task.id}')" title="Star">${task.starred ? "⭐" : "☆"}</button>
+          <button class="task-action-btn" onclick="openTaskForm('${task.id}')" title="Edit">✏</button>
+          <button class="task-action-btn" onclick="deleteTask('${task.id}')" title="Delete" style="color:var(--red)">✕</button>
+        </div>
+      </div>
+      ${renderSubs(task)}`;
+          el.addEventListener("dragstart", (e) => {
+            dragSrcId = task.id;
+            e.dataTransfer.effectAllowed = "move";
+            e.dataTransfer.setData("text/plain", task.id);
+            setTimeout(() => el.classList.add("dragging"), 0);
+          });
+          el.addEventListener("dragend", () => {
+            el.classList.remove("dragging");
+            document
+              .querySelectorAll(".task-item")
+              .forEach((x) => x.classList.remove("drag-over"));
+          });
+          el.addEventListener("dragover", (e) => {
+            e.preventDefault();
+            e.dataTransfer.dropEffect = "move";
+            document
+              .querySelectorAll(".task-item")
+              .forEach((x) => x.classList.remove("drag-over"));
+            el.classList.add("drag-over");
+          });
+          el.addEventListener("dragleave", (e) => {
+            if (!el.contains(e.relatedTarget)) el.classList.remove("drag-over");
+          });
+          el.addEventListener("drop", (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            el.classList.remove("drag-over");
+            const srcId = e.dataTransfer.getData("text/plain") || dragSrcId;
+            if (!srcId || srcId === task.id) return;
+            const si = tasks.findIndex((t) => t.id === srcId);
+            const di = tasks.findIndex((t) => t.id === task.id);
+            if (si !== -1 && di !== -1) {
+              const [m] = tasks.splice(si, 1);
+              tasks.splice(di, 0, m);
+              saveTasks();
+              renderTasks();
+            }
+          });
+          list.appendChild(el);
+        });
+      }
+      function renderSubs(task) {
+        const subs = task.subtasks || [];
+        let h = '<div class="subtasks">';
+        subs.forEach((s, i) => {
+          h += `<div class="subtask-item${s.done ? " done" : ""}">
+      <div class="subtask-check" onclick="toggleSub('${task.id}',${i})">
+        ${s.done ? '<svg width="7" height="7" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>' : ""}
+      </div>
+      <span>${esc(s.text)}</span>
+      <span onclick="delSub('${task.id}',${i})" style="margin-left:auto;cursor:pointer;color:var(--muted2);font-size:0.65rem">✕</span>
+    </div>`;
+        });
+        h += `<div class="add-subtask-row">
+    <input class="add-subtask-input" placeholder="Add subtask…" id="sub-${task.id}"
+      onkeydown="if(event.key==='Enter'){addSub('${task.id}');event.stopPropagation()}">
+    <button class="add-subtask-btn" onclick="addSub('${task.id}')">+</button>
+  </div></div>`;
+        return h;
+      }
+      function addSub(id) {
+        const inp = document.getElementById("sub-" + id);
+        if (!inp) return;
+        const text = inp.value.trim();
+        if (!text) return;
+        const t = tasks.find((x) => x.id === id);
+        if (t) {
+          if (!t.subtasks) t.subtasks = [];
+          t.subtasks.push({ text, done: false });
+          saveTasks();
+          renderTasks();
+        }
+      }
+      function toggleSub(id, i) {
+        const t = tasks.find((x) => x.id === id);
+        if (t && t.subtasks[i]) {
+          t.subtasks[i].done = !t.subtasks[i].done;
+          saveTasks();
+          renderTasks();
+        }
+      }
+      function delSub(id, i) {
+        const t = tasks.find((x) => x.id === id);
+        if (t) {
+          t.subtasks.splice(i, 1);
+          saveTasks();
+          renderTasks();
+        }
+      }
+      function esc(s) {
+        return (s || "")
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;")
+          .replace(/"/g, "&quot;");
+      }
+      function exportTasks() {
+        // Build readable text export
+        const lines = [];
+        lines.push("DRIFT TASKS EXPORT");
+        lines.push("Exported: " + new Date().toLocaleString());
+        lines.push("Total: " + tasks.length + " tasks");
+        lines.push("=".repeat(40));
+        tasks.forEach((t, i) => {
+          lines.push("");
+          lines.push(i + 1 + ". " + t.title + (t.completed ? " [DONE]" : ""));
+          if (t.priority) lines.push("   Priority: " + t.priority);
+          if (t.category) lines.push("   Category: " + t.category);
+          if (t.due) lines.push("   Due: " + t.due);
+          if (t.notes) lines.push("   Notes: " + t.notes);
+          if (t.subtasks && t.subtasks.length) {
+            lines.push("   Subtasks:");
+            t.subtasks.forEach((s) =>
+              lines.push("     - [" + (s.done ? "x" : " ") + "] " + s.text),
+            );
+          }
+        });
+        lines.push("");
+        lines.push("--- JSON DATA (for import) ---");
+        lines.push(
+          JSON.stringify(
+            { tasks, exportedAt: new Date().toISOString() },
+            null,
+            2,
+          ),
+        );
+        const blob = new Blob([lines.join("\n")], { type: "text/plain" });
+        const a = document.createElement("a");
+        a.href = URL.createObjectURL(blob);
+        a.download =
+          "drift-tasks-" + new Date().toISOString().slice(0, 10) + ".txt";
+        a.click();
+        URL.revokeObjectURL(a.href);
+      }
+      function importTasks(e) {
+        const file = e.target.files[0];
+        if (!file) return;
+        const r = new FileReader();
+        r.onload = (ev) => {
+          try {
+            let text = ev.target.result;
+            // If .txt export, extract the JSON section
+            const marker = "--- JSON DATA (for import) ---";
+            const idx = text.indexOf(marker);
+            if (idx !== -1) text = text.slice(idx + marker.length).trim();
+            const d = JSON.parse(text);
+            const imp = d.tasks || d;
+            if (Array.isArray(imp)) {
+              // merge, avoid duplicates by id
+              const existIds = new Set(tasks.map((t) => t.id));
+              const fresh = imp.filter((t) => !existIds.has(t.id));
+              tasks = [...fresh, ...tasks];
+              saveTasks();
+              renderTasks();
+              alert("Imported " + fresh.length + " task(s) successfully.");
+            }
+          } catch {
+            alert(
+              "Could not read file. Please import a .txt file exported from Drift.",
+            );
+          }
+          e.target.value = "";
+        };
+        r.readAsText(file);
+      }
+
+      init();
+    </script>
+  </body>
+</html>

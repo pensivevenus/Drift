@@ -2,9 +2,7 @@ import { IDLE_TIMEOUT } from '../shared/constants.js';
 import { endSession } from '../shared/session.js';
 import { addEventToSession, getSession, saveSession } from '../shared/db.js';
 
-const channel = new BroadcastChannel('drift');
-
-// ── receive messages from extension pages ─────────────────
+// ── receive messages from extension pages + content scripts
 chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
   if (msg.type === 'ping') {
     sendResponse({ status: 'awake' });
@@ -27,63 +25,53 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
     return true;
   }
 
-if (msg.type === 'end_session') {
-  const sessionId = msg.sessionId;
-  handleEndSession(sessionId).then(() => {
-    chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-      if (tabs[0]) {
-        chrome.tabs.update(tabs[0].id, {
-          url: chrome.runtime.getURL(`river/river.html?id=${sessionId}`)
-        });
-      }
+  if (msg.type === 'end_session') {
+    const sessionId = msg.sessionId;
+    handleEndSession(sessionId).then(() => {
+      chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+        if (tabs[0]) {
+          chrome.tabs.update(tabs[0].id, {
+            url: chrome.runtime.getURL(`river/river.html?id=${sessionId}`)
+          });
+        }
+      });
     });
-  });
-  sendResponse({ status: 'ok' });
-  return true;
-}
+    sendResponse({ status: 'ok' });
+    return true;
+  }
 
-if (msg.type === 'tab_open') {
+  if (msg.type === 'tab_open') {
+    if (sender.tab) msg.realTabId = sender.tab.id;
     handleTabOpen(msg);
     return true;
   }
 
   if (msg.type === 'focus') {
+    if (sender.tab) msg.realTabId = sender.tab.id;
     handleFocus(msg);
     return true;
   }
 
   if (msg.type === 'blur') {
+    if (sender.tab) msg.realTabId = sender.tab.id;
     handleBlur(msg);
+    return true;
+  }
+
+  if (msg.type === 'interrupt_dismissed') {
+    console.log('Interrupt dismissed:', msg.action);
     return true;
   }
 
   return true;
 });
 
-// ── listen to tab events from content scripts ─────────────
-channel.onmessage = async (e) => {
-  const msg = e.data;
-  if (!msg || !msg.type) return;
-
-  await chrome.storage.local.set({ last_event_time: Date.now() });
-
-  switch (msg.type) {
-    case 'tab_open':
-      await handleTabOpen(msg);
-      break;
-    case 'focus':
-      await handleFocus(msg);
-      break;
-    case 'blur':
-      await handleBlur(msg);
-      break;
-  }
-};
-
 // ── tab open ──────────────────────────────────────────────
 async function handleTabOpen(msg) {
   const { active_session_id } = await chrome.storage.local.get('active_session_id');
   if (!active_session_id) return;
+
+  await chrome.storage.local.set({ last_event_time: Date.now() });
 
   const { tab_open_timestamps = [] } = await chrome.storage.local.get('tab_open_timestamps');
   const updated = [...tab_open_timestamps, Date.now()].slice(-10);
@@ -105,7 +93,8 @@ async function handleFocus(msg) {
   if (!active_session_id) return;
 
   await chrome.storage.local.set({
-    last_focused_tab_id: msg.tabId,
+    last_event_time: Date.now(),
+    last_focused_tab_id: msg.realTabId || msg.tabId,
     last_focused_domain: msg.domain,
     last_focus_time: msg.timestamp,
   });
@@ -124,6 +113,8 @@ async function handleFocus(msg) {
 async function handleBlur(msg) {
   const { active_session_id } = await chrome.storage.local.get('active_session_id');
   if (!active_session_id) return;
+
+  await chrome.storage.local.set({ last_event_time: Date.now() });
 
   await addEventToSession(active_session_id, {
     type: 'blur',
@@ -231,7 +222,7 @@ chrome.alarms.onAlarm.addListener(async (alarm) => {
   if (Date.now() - last_event_time > IDLE_TIMEOUT) {
     console.log('Drift: idle timeout — ending session');
     const sessionId = active_session_id;
-    await handleEndSession();
+    await handleEndSession(sessionId);
     const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
     if (tabs[0]) {
       chrome.tabs.update(tabs[0].id, {

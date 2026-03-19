@@ -1,0 +1,590 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Drift — Set your intention. Watch your focus. See the truth.</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@300;400;500&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#09090f;--bg2:#0f1018;--bg3:#161720;
+  --border:rgba(255,255,255,0.07);--text:#ede8df;
+  --muted:rgba(237,232,223,0.45);--accent:#c8a97e;
+  --accent2:#7baaa0;--red:#d4766a;
+}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;font-weight:300;line-height:1.7;overflow-x:hidden}
+body::after{content:'';position:fixed;inset:0;z-index:999;pointer-events:none;opacity:0.03;
+  background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-size:200px 200px}
+
+/* NAV */
+nav{position:fixed;top:0;left:0;right:0;z-index:100;display:flex;align-items:center;justify-content:space-between;padding:1.2rem 4rem;background:rgba(9,9,15,0.88);backdrop-filter:blur(16px);border-bottom:1px solid var(--border)}
+.nav-logo{font-family:'DM Serif Display',serif;font-size:1.5rem;color:var(--accent);letter-spacing:0.02em;text-decoration:none}
+.nav-right{display:flex;gap:1.5rem;align-items:center}
+.nav-link{font-family:'DM Mono',monospace;font-size:0.72rem;color:var(--muted);text-decoration:none;letter-spacing:0.08em;text-transform:uppercase;transition:color 0.2s}
+.nav-link:hover{color:var(--text)}
+.nav-cta{font-family:'DM Mono',monospace;font-size:0.72rem;letter-spacing:0.08em;text-transform:uppercase;padding:0.5rem 1.2rem;background:var(--accent);color:#09090f;text-decoration:none;border-radius:4px;font-weight:500;transition:opacity 0.2s,transform 0.2s}
+.nav-cta:hover{opacity:0.85;transform:translateY(-1px)}
+
+/* HERO */
+.hero{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:8rem 2rem 4rem;position:relative;overflow:hidden}
+#hero-canvas{position:absolute;inset:0;width:100%;height:100%;z-index:0}
+.hero-content{position:relative;z-index:1;max-width:780px}
+.hero-tag{display:inline-block;font-family:'DM Mono',monospace;font-size:0.68rem;letter-spacing:0.15em;text-transform:uppercase;color:var(--accent);border:1px solid rgba(200,169,126,0.35);padding:0.3rem 0.9rem;border-radius:100px;margin-bottom:2rem;animation:fadeUp 0.8s ease forwards;opacity:0}
+.hero-title{font-family:'DM Serif Display',serif;font-size:clamp(3rem,7vw,5.5rem);line-height:1.08;letter-spacing:-0.02em;margin-bottom:1.5rem;animation:fadeUp 0.8s 0.15s ease forwards;opacity:0}
+.hero-title em{font-style:italic;color:var(--accent)}
+.hero-subtitle{font-size:1.05rem;color:var(--muted);max-width:520px;margin:0 auto 3rem;animation:fadeUp 0.8s 0.3s ease forwards;opacity:0}
+.hero-actions{display:flex;gap:1rem;justify-content:center;flex-wrap:wrap;animation:fadeUp 0.8s 0.45s ease forwards;opacity:0}
+.btn-primary{font-family:'DM Mono',monospace;font-size:0.8rem;letter-spacing:0.08em;text-transform:uppercase;font-weight:500;padding:0.9rem 2.2rem;background:var(--accent);color:#09090f;text-decoration:none;border-radius:6px;transition:all 0.25s;display:inline-flex;align-items:center;gap:0.5rem}
+.btn-primary:hover{background:#d4b88e;transform:translateY(-2px);box-shadow:0 8px 28px rgba(200,169,126,0.3)}
+.btn-secondary{font-family:'DM Mono',monospace;font-size:0.8rem;letter-spacing:0.08em;text-transform:uppercase;padding:0.9rem 2.2rem;border:1px solid var(--border);color:var(--muted);text-decoration:none;border-radius:6px;transition:all 0.25s;display:inline-flex;align-items:center;gap:0.5rem}
+.btn-secondary:hover{border-color:rgba(255,255,255,0.2);color:var(--text);transform:translateY(-2px)}
+.hero-scroll{position:absolute;bottom:2.5rem;left:50%;transform:translateX(-50%);font-family:'DM Mono',monospace;font-size:0.65rem;letter-spacing:0.12em;text-transform:uppercase;color:var(--muted);display:flex;flex-direction:column;align-items:center;gap:0.5rem;animation:fadeIn 1s 1.2s ease forwards;opacity:0}
+.scroll-line{width:1px;height:40px;background:linear-gradient(to bottom,var(--muted),transparent);animation:scrollPulse 2s ease-in-out infinite}
+@keyframes scrollPulse{0%,100%{opacity:0.4}50%{opacity:1}}
+@keyframes fadeUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+
+/* SECTIONS */
+section{padding:6rem 2rem}
+.container{max-width:1100px;margin:0 auto}
+.section-label{font-family:'DM Mono',monospace;font-size:0.68rem;letter-spacing:0.15em;text-transform:uppercase;color:var(--accent);margin-bottom:1rem}
+.section-title{font-family:'DM Serif Display',serif;font-size:clamp(2rem,4vw,3rem);line-height:1.15;margin-bottom:1.2rem}
+.section-sub{color:var(--muted);font-size:1rem;max-width:540px}
+.divider{height:1px;background:linear-gradient(90deg,transparent,var(--border),transparent);margin:0 4rem}
+
+/* WHAT */
+.what-grid{display:grid;grid-template-columns:1fr 1fr;gap:5rem;align-items:center;margin-top:4rem}
+.what-visual{position:relative;height:300px;background:var(--bg2);border:1px solid var(--border);border-radius:16px;overflow:hidden}
+.mini-river{position:absolute;inset:0;display:flex;flex-direction:column;justify-content:center;gap:0;padding:2rem}
+.mini-band{height:30px;border-radius:4px;margin:4px 0;opacity:0.7}
+.band-label{position:absolute;left:1.5rem;top:1rem;font-family:'DM Mono',monospace;font-size:0.6rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted)}
+.what-text p{color:var(--muted);margin-bottom:1rem;font-size:0.95rem}
+
+/* FEATURES */
+.features-bg{background:var(--bg2)}
+.features-intro{text-align:center;margin-bottom:4rem}
+.features-intro .section-sub{margin:0 auto}
+.features-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1.5px;background:var(--border);border:1px solid var(--border);border-radius:16px;overflow:hidden}
+.feature-card{background:var(--bg2);padding:2.5rem 2rem;transition:background 0.25s}
+.feature-card:hover{background:var(--bg3)}
+.feature-icon{width:44px;height:44px;border-radius:10px;display:flex;align-items:center;justify-content:center;margin-bottom:1.2rem;font-size:1.2rem}
+.feature-card h3{font-family:'DM Serif Display',serif;font-size:1.15rem;margin-bottom:0.6rem;font-weight:400}
+.feature-card p{font-size:0.88rem;color:var(--muted);line-height:1.65}
+
+/* HOW */
+.steps{display:grid;grid-template-columns:repeat(3,1fr);gap:3rem;margin-top:4rem;position:relative}
+.steps::before{content:'';position:absolute;top:28px;left:calc(16.66% + 1rem);right:calc(16.66% + 1rem);height:1px;background:linear-gradient(90deg,var(--accent),var(--accent2),var(--accent));opacity:0.3}
+.step{text-align:center}
+.step-num{width:56px;height:56px;border-radius:50%;background:var(--bg2);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;margin:0 auto 1.5rem;font-family:'DM Mono',monospace;font-size:0.9rem;color:var(--accent);position:relative;z-index:1}
+.step h3{font-family:'DM Serif Display',serif;font-size:1.2rem;font-weight:400;margin-bottom:0.5rem}
+.step p{font-size:0.88rem;color:var(--muted)}
+
+/* BRIDGE */
+.bridge-section{background:var(--bg2)}
+.bridge-grid{display:grid;grid-template-columns:1fr 1fr;gap:4rem;align-items:center;margin-top:4rem}
+.bridge-code{background:var(--bg);border:1px solid var(--border);border-radius:12px;padding:2rem;font-family:'DM Mono',monospace;font-size:0.75rem;line-height:2;color:var(--muted)}
+.bridge-code .key{color:var(--accent2)}.bridge-code .val{color:var(--accent)}.bridge-code .comment{color:rgba(237,232,223,0.2)}
+.bridge-list{list-style:none;display:flex;flex-direction:column;gap:1rem}
+.bridge-list li{display:flex;gap:1rem;align-items:flex-start;font-size:0.9rem;color:var(--muted)}
+.bridge-list li::before{content:'→';color:var(--accent);font-family:'DM Mono',monospace;flex-shrink:0;margin-top:0.1rem}
+
+/* EXTENSION SETUP */
+.ext-section{position:relative;overflow:hidden}
+.ext-glow{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:700px;height:400px;background:radial-gradient(ellipse,rgba(123,170,160,0.08) 0%,transparent 70%);pointer-events:none}
+.ext-grid{display:grid;grid-template-columns:1fr 1fr;gap:5rem;align-items:center;margin-top:4rem}
+.ext-steps{display:flex;flex-direction:column;gap:1.5rem}
+.ext-step{display:flex;gap:1.2rem;align-items:flex-start}
+.ext-step-num{width:32px;height:32px;border-radius:50%;background:rgba(123,170,160,0.12);border:1px solid rgba(123,170,160,0.3);display:flex;align-items:center;justify-content:center;font-family:'DM Mono',monospace;font-size:0.72rem;color:var(--accent2);flex-shrink:0;margin-top:0.1rem}
+.ext-step-text h4{font-size:0.95rem;font-weight:500;margin-bottom:0.2rem}
+.ext-step-text p{font-size:0.85rem;color:var(--muted)}
+.ext-cta-box{background:var(--bg2);border:1px solid var(--border);border-radius:16px;padding:2.5rem;text-align:center}
+.ext-cta-box .icon{font-size:2.5rem;margin-bottom:1rem}
+.ext-cta-box h3{font-family:'DM Serif Display',serif;font-size:1.4rem;font-weight:400;margin-bottom:0.6rem}
+.ext-cta-box p{font-size:0.88rem;color:var(--muted);margin-bottom:2rem;line-height:1.65}
+.btn-accent2{font-family:'DM Mono',monospace;font-size:0.8rem;letter-spacing:0.08em;text-transform:uppercase;font-weight:500;padding:0.9rem 2rem;background:var(--accent2);color:#09090f;text-decoration:none;border-radius:6px;transition:all 0.25s;display:inline-flex;align-items:center;gap:0.5rem}
+.btn-accent2:hover{background:#8ec4ba;transform:translateY(-2px);box-shadow:0 8px 24px rgba(123,170,160,0.25)}
+.ext-note{font-family:'DM Mono',monospace;font-size:0.68rem;letter-spacing:0.05em;color:var(--muted);margin-top:1rem;opacity:0.7}
+
+/* PRIVACY */
+.privacy-cards{display:grid;grid-template-columns:repeat(4,1fr);gap:1rem;margin-top:3rem}
+.privacy-card{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:1.8rem 1.4rem;text-align:center}
+.privacy-card .icon{font-size:1.8rem;margin-bottom:0.8rem}
+.privacy-card h4{font-family:'DM Serif Display',serif;font-size:1rem;font-weight:400;margin-bottom:0.4rem}
+.privacy-card p{font-size:0.8rem;color:var(--muted)}
+
+/* CTA */
+.cta-section{text-align:center;padding:8rem 2rem;position:relative;overflow:hidden}
+.cta-glow{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:500px;height:500px;background:radial-gradient(circle,rgba(200,169,126,0.07) 0%,transparent 70%);pointer-events:none}
+.cta-section .section-title{font-size:clamp(2.2rem,5vw,3.8rem);margin-bottom:1.2rem}
+.cta-section .section-sub{margin:0 auto 3rem}
+.cta-actions{display:flex;gap:1rem;justify-content:center;flex-wrap:wrap}
+
+/* FOOTER */
+footer{padding:3rem 4rem;border-top:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:1rem}
+.footer-logo{font-family:'DM Serif Display',serif;font-size:1.2rem;color:var(--accent)}
+.footer-meta{font-family:'DM Mono',monospace;font-size:0.65rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted)}
+.footer-links{display:flex;gap:2rem}
+.footer-links a{font-family:'DM Mono',monospace;font-size:0.65rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);text-decoration:none;transition:color 0.2s}
+.footer-links a:hover{color:var(--text)}
+
+/* REVEAL */
+.reveal{opacity:0;transform:translateY(24px);transition:opacity 0.7s ease,transform 0.7s ease}
+.reveal.visible{opacity:1;transform:translateY(0)}
+
+/* RESPONSIVE */
+@media(max-width:900px){
+  nav{padding:1rem 1.5rem}
+  .what-grid,.bridge-grid,.ext-grid{grid-template-columns:1fr;gap:2.5rem}
+  .features-grid{grid-template-columns:1fr 1fr}
+  .steps{grid-template-columns:1fr;gap:2rem}.steps::before{display:none}
+  .privacy-cards{grid-template-columns:1fr 1fr}
+  footer{flex-direction:column;align-items:flex-start;padding:2rem 1.5rem}
+}
+@media(max-width:600px){
+  .features-grid{grid-template-columns:1fr}
+  .privacy-cards{grid-template-columns:1fr}
+  .nav-right .nav-link{display:none}
+}
+</style>
+</head>
+<body>
+
+<nav>
+  <a href="#hero" class="nav-logo">Drift</a>
+  <div class="nav-right">
+    <a href="#features" class="nav-link">Features</a>
+    <a href="#how" class="nav-link">How it works</a>
+    <a href="#extension" class="nav-link">Extension</a>
+    <a href="#privacy" class="nav-link">Privacy</a>
+    <a href="https://github.com/pensivevenus/Drift" target="_blank" class="nav-link">GitHub</a>
+    <a href="app.html" class="nav-cta">Open Drift Focus →</a>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section class="hero" id="hero">
+  <canvas id="hero-canvas"></canvas>
+  <div class="hero-content">
+    <span class="hero-tag">Open source · Fully local · No backend</span>
+    <h1 class="hero-title">Set your intention.<br><em>Watch your focus.</em><br>See the truth.</h1>
+    <p class="hero-subtitle">Drift closes the loop between what you meant to do and what you actually did — with a focus timer, smart todo system, and attention tracking that never leaves your browser.</p>
+    <div class="hero-actions">
+      <a href="app.html" class="btn-primary">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><polygon points="10 8 16 12 10 16 10 8"/></svg>
+        Open Drift Focus
+      </a>
+      <a href="https://github.com/pensivevenus/Drift" target="_blank" class="btn-secondary">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z"/></svg>
+        View on GitHub
+      </a>
+    </div>
+  </div>
+  <div class="hero-scroll">
+    <div class="scroll-line"></div>
+    scroll
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- WHAT IS DRIFT -->
+<section id="about">
+  <div class="container">
+    <div class="what-grid">
+      <div class="what-visual">
+        <span class="band-label">your last session</span>
+        <div class="mini-river">
+          <div class="mini-band" style="background:#c8a97e;width:100%"></div>
+          <div class="mini-band" style="background:#7baaa0;width:72%;margin-left:8%"></div>
+          <div class="mini-band" style="background:#d4766a;width:28%;margin-left:5%"></div>
+          <div class="mini-band" style="background:#c8a97e;width:88%"></div>
+          <div class="mini-band" style="background:#9b8ec4;width:45%;margin-left:18%"></div>
+          <div class="mini-band" style="background:#7baaa0;width:62%;margin-left:6%"></div>
+        </div>
+      </div>
+      <div class="what-text reveal">
+        <div class="section-label">What is Drift</div>
+        <h2 class="section-title">Your attention, honestly mapped.</h2>
+        <p>Most productivity tools either block everything or show guilt-inducing totals long after it's too late. Drift does neither — it watches where your attention actually goes and shows you the truth in a beautiful river map when your session ends.</p>
+        <p>No account. No server. No data leaving your browser. Just you, your intention, and an honest record of the session.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- FEATURES -->
+<section id="features" class="features-bg">
+  <div class="container">
+    <div class="features-intro reveal">
+      <div class="section-label">Features</div>
+      <h2 class="section-title">Everything you need. Nothing you don't.</h2>
+      <p class="section-sub">Three parts. One system. Fully local.</p>
+    </div>
+    <div class="features-grid reveal">
+      <div class="feature-card">
+        <div class="feature-icon" style="background:rgba(200,169,126,0.12);color:var(--accent)">⏱</div>
+        <h3>Pomodoro Timer</h3>
+        <p>25/5 work-break rhythm with a smooth SVG ring. Custom durations. Web Audio chime on completion. Session stats tracked locally. Lo-fi ambient sounds built in.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon" style="background:rgba(123,170,160,0.12);color:var(--accent2)">✓</div>
+        <h3>Smart Todo List</h3>
+        <p>Add, edit, delete, pin, star tasks. Categories, priorities, due dates, subtasks. Drag-and-drop reorder. Overdue highlighting. Undo delete. Export as JSON.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon" style="background:rgba(212,118,106,0.12);color:var(--red)">◎</div>
+        <h3>Drift Detection</h3>
+        <p>Opens too many tabs? Off-task? A gentle overlay appears — not an alarm, just a quiet mirror. Keep going or refocus. 5-minute cooldown. No judgment.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon" style="background:rgba(200,169,126,0.12);color:var(--accent)">〜</div>
+        <h3>River Map</h3>
+        <p>When your session ends, Drift renders a canvas stream graph. Each domain a coloured band, time flowing left to right. Export as PNG or SVG.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon" style="background:rgba(123,170,160,0.12);color:var(--accent2)">♪</div>
+        <h3>Lo-fi Soundscape</h3>
+        <p>White noise, rainforest, ocean waves, lo-fi beats — all generated by the Web Audio API. Zero external audio files. Volume control. Quiet mode toggle.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon" style="background:rgba(155,142,196,0.12);color:#9b8ec4">⬡</div>
+        <h3>Session History</h3>
+        <p>All sessions stored in IndexedDB for 30 days. Browse by date, see intention and interrupt count, re-render any past river map.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- HOW IT WORKS -->
+<section id="how">
+  <div class="container">
+    <div class="reveal" style="text-align:center">
+      <div class="section-label">How it works</div>
+      <h2 class="section-title">Three steps. Zero friction.</h2>
+    </div>
+    <div class="steps reveal">
+      <div class="step">
+        <div class="step-num">01</div>
+        <h3>Set your intention</h3>
+        <p>Open the web app or a new tab. Type what you're working on. Press Enter. Drift remembers.</p>
+      </div>
+      <div class="step">
+        <div class="step-num">02</div>
+        <h3>Work naturally</h3>
+        <p>Browse, research, write. Drift silently watches which domains you visit. No blocking, no alarms — unless you start to drift.</p>
+      </div>
+      <div class="step">
+        <div class="step-num">03</div>
+        <h3>See the truth</h3>
+        <p>When your session ends, the river map renders. Your full attention timeline, beautifully visualised. Export and learn.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- BRIDGE -->
+<section class="bridge-section">
+  <div class="container">
+    <div class="bridge-grid">
+      <div class="reveal">
+        <div class="section-label">The Bridge</div>
+        <h2 class="section-title">Web app + Extension.<br>One system.</h2>
+        <p style="color:var(--muted);margin-bottom:2rem;font-size:0.95rem">The web app and extension talk to each other entirely through localStorage. No server, no sync — just the browser talking to itself.</p>
+        <ul class="bridge-list">
+          <li>Start a pomodoro in the web app — the extension picks up your intention on every new tab automatically</li>
+          <li>Drift detection fires from the extension — interrupt count recorded in your session</li>
+          <li>Pomodoro ends — river map generates from your full event log</li>
+        </ul>
+      </div>
+      <div class="bridge-code reveal">
+        <span class="comment">// localStorage bridge keys</span><br>
+        <span class="key">drift_active_session</span> → <span class="val">session UUID</span><br>
+        <span class="key">drift_intention</span> → <span class="val">"write my essay"</span><br>
+        <span class="key">drift_start_time</span> → <span class="val">timestamp</span><br>
+        <span class="key">drift_session_end</span> → <span class="val">triggers river</span><br><br>
+        <span class="comment">// extension reads these</span><br>
+        <span class="comment">// on every new tab open</span><br><br>
+        <span class="key">No server.</span><br>
+        <span class="key">No API.</span><br>
+        <span class="val">Just localStorage.</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- SETUP EXTENSION -->
+<section id="extension" class="ext-section">
+  <div class="ext-glow"></div>
+  <div class="container">
+    <div class="reveal" style="text-align:center;margin-bottom:1rem">
+      <div class="section-label">Browser Extension</div>
+      <h2 class="section-title">Set up the extension in 60 seconds.</h2>
+      <p class="section-sub" style="margin:0 auto">The extension adds new tab override, drift detection, and river map to your browser. Free, open source, no account needed.</p>
+    </div>
+    <div class="ext-grid reveal">
+      <div class="ext-steps">
+        <div class="ext-step">
+          <div class="ext-step-num">1</div>
+          <div class="ext-step-text">
+            <h4>Clone or download the repo</h4>
+            <p>Run <code style="font-family:'DM Mono',monospace;color:var(--accent);font-size:0.82rem">git clone https://github.com/pensivevenus/Drift.git</code> or download the ZIP from GitHub.</p>
+          </div>
+        </div>
+        <div class="ext-step">
+          <div class="ext-step-num">2</div>
+          <div class="ext-step-text">
+            <h4>Open Chrome Extensions</h4>
+            <p>Navigate to <code style="font-family:'DM Mono',monospace;color:var(--accent);font-size:0.82rem">chrome://extensions</code> and enable Developer Mode in the top right.</p>
+          </div>
+        </div>
+        <div class="ext-step">
+          <div class="ext-step-num">3</div>
+          <div class="ext-step-text">
+            <h4>Load unpacked</h4>
+            <p>Click "Load unpacked" and select the <code style="font-family:'DM Mono',monospace;color:var(--accent);font-size:0.82rem">extension/</code> folder inside the cloned repo.</p>
+          </div>
+        </div>
+        <div class="ext-step">
+          <div class="ext-step-num">4</div>
+          <div class="ext-step-text">
+            <h4>Open a new tab</h4>
+            <p>Drift replaces your new tab page. Type your intention, press Enter, and start your session.</p>
+          </div>
+        </div>
+      </div>
+      <div class="ext-cta-box">
+        <div class="icon">⚡</div>
+        <h3>Ready to install?</h3>
+        <p>The full source code is on GitHub. Clone the repo, load the <code style="font-family:'DM Mono',monospace;color:var(--accent2)">extension/</code> folder in Chrome, and you're done. Works on Chrome, Edge, and Brave.</p>
+        <a href="https://github.com/pensivevenus/Drift" target="_blank" class="btn-accent2">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z"/></svg>
+          Setup Extension Now
+        </a>
+        <p class="ext-note">Manifest V3 · Chrome, Edge, Brave · Apache 2.0</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- PRIVACY -->
+<section id="privacy">
+  <div class="container">
+    <div class="reveal" style="text-align:center">
+      <div class="section-label">Privacy</div>
+      <h2 class="section-title">Your attention data is yours.</h2>
+      <p class="section-sub" style="margin:0 auto">No account. No server. No tracking. Everything stays on your device.</p>
+    </div>
+    <div class="privacy-cards reveal">
+      <div class="privacy-card">
+        <div class="icon">🔒</div>
+        <h4>No account required</h4>
+        <p>Ever. Open the app and start. No sign-up, no email, no password.</p>
+      </div>
+      <div class="privacy-card">
+        <div class="icon">📡</div>
+        <h4>No server</h4>
+        <p>Zero backend. All data lives in IndexedDB and localStorage on your machine.</p>
+      </div>
+      <div class="privacy-card">
+        <div class="icon">🌐</div>
+        <h4>Domains only</h4>
+        <p>The extension records domain names only — never full URLs, never page content.</p>
+      </div>
+      <div class="privacy-card">
+        <div class="icon">🗑️</div>
+        <h4>Delete anytime</h4>
+        <p>One button in Settings wipes all session history instantly. No confirmation emails.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- FINAL CTA -->
+<section class="cta-section">
+  <div class="cta-glow"></div>
+  <div class="container reveal">
+    <div class="section-label" style="text-align:center">Ready?</div>
+    <h2 class="section-title">Start your first session.</h2>
+    <p class="section-sub">Open the web app, set your intention, and see where your focus actually goes.</p>
+    <div class="cta-actions">
+      <a href="app.html" class="btn-primary">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><polygon points="10 8 16 12 10 16 10 8"/></svg>
+        Open Drift Focus
+      </a>
+      <a href="https://github.com/pensivevenus/Drift" target="_blank" class="btn-secondary">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z"/></svg>
+        Star on GitHub
+      </a>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <span class="footer-logo">Drift</span>
+  <div class="footer-links">
+    <a href="app.html">Web App</a>
+    <a href="https://github.com/pensivevenus/Drift" target="_blank">GitHub</a>
+    <a href="#privacy">Privacy</a>
+  </div>
+  <span class="footer-meta">Apache 2.0 · No backend · No tracking</span>
+</footer>
+
+<script>
+// ── CANVAS HERO ANIMATION ──
+const canvas = document.getElementById('hero-canvas');
+const ctx = canvas.getContext('2d');
+let W, H, streams = [], particles = [];
+
+function resize() {
+  W = canvas.width = canvas.offsetWidth;
+  H = canvas.height = canvas.offsetHeight;
+  initStreams();
+}
+
+const COLORS = [
+  'rgba(200,169,126,',
+  'rgba(123,170,160,',
+  'rgba(212,118,106,',
+  'rgba(155,142,196,',
+  'rgba(200,169,126,',
+  'rgba(123,170,160,',
+];
+
+function initStreams() {
+  streams = [];
+  const count = 12;
+  for (let i = 0; i < count; i++) {
+    streams.push({
+      y: H * (0.1 + (i / count) * 0.85),
+      x: -Math.random() * W,
+      speed: 0.4 + Math.random() * 1.2,
+      width: W * (0.3 + Math.random() * 0.6),
+      height: 1.5 + Math.random() * 3,
+      color: COLORS[i % COLORS.length],
+      opacity: 0.15 + Math.random() * 0.45,
+      wave: Math.random() * Math.PI * 2,
+      waveSpeed: 0.003 + Math.random() * 0.006,
+      waveAmp: 1 + Math.random() * 4,
+    });
+  }
+  // floating particles
+  particles = [];
+  for (let i = 0; i < 60; i++) {
+    particles.push({
+      x: Math.random() * W,
+      y: Math.random() * H,
+      r: 0.5 + Math.random() * 1.5,
+      vx: (Math.random() - 0.5) * 0.3,
+      vy: -0.1 - Math.random() * 0.25,
+      color: COLORS[Math.floor(Math.random() * COLORS.length)],
+      opacity: 0.1 + Math.random() * 0.4,
+      life: Math.random(),
+    });
+  }
+}
+
+function draw() {
+  ctx.clearRect(0, 0, W, H);
+
+  // deep background gradient
+  const bg = ctx.createRadialGradient(W/2, H/2, 0, W/2, H/2, Math.max(W,H)*0.7);
+  bg.addColorStop(0, 'rgba(20,18,32,0.95)');
+  bg.addColorStop(0.5, 'rgba(13,15,24,0.85)');
+  bg.addColorStop(1, 'rgba(9,9,15,0.0)');
+  ctx.fillStyle = bg;
+  ctx.fillRect(0, 0, W, H);
+
+  // central amber glow
+  const glow = ctx.createRadialGradient(W/2, H*0.48, 0, W/2, H*0.48, W*0.45);
+  glow.addColorStop(0, 'rgba(200,169,126,0.07)');
+  glow.addColorStop(0.5, 'rgba(123,170,160,0.03)');
+  glow.addColorStop(1, 'transparent');
+  ctx.fillStyle = glow;
+  ctx.fillRect(0, 0, W, H);
+
+  // draw streams
+  streams.forEach(s => {
+    s.wave += s.waveSpeed;
+    s.x += s.speed;
+    if (s.x > W + 100) s.x = -s.width - 100;
+
+    const yOff = Math.sin(s.wave) * s.waveAmp;
+
+    // glow layer
+    const grad = ctx.createLinearGradient(s.x, 0, s.x + s.width, 0);
+    grad.addColorStop(0, s.color + '0)');
+    grad.addColorStop(0.15, s.color + s.opacity + ')');
+    grad.addColorStop(0.85, s.color + s.opacity + ')');
+    grad.addColorStop(1, s.color + '0)');
+
+    ctx.save();
+    ctx.shadowColor = s.color + '0.8)';
+    ctx.shadowBlur = 8;
+    ctx.fillStyle = grad;
+    ctx.beginPath();
+    ctx.roundRect(s.x, s.y + yOff - s.height/2, s.width, s.height, s.height/2);
+    ctx.fill();
+    ctx.restore();
+  });
+
+  // particles
+  particles.forEach(p => {
+    p.x += p.vx;
+    p.y += p.vy;
+    p.life -= 0.002;
+    if (p.life <= 0 || p.y < -10) {
+      p.x = Math.random() * W;
+      p.y = H + 10;
+      p.life = 0.5 + Math.random() * 0.5;
+      p.opacity = 0.1 + Math.random() * 0.35;
+    }
+    const fade = Math.min(p.life * 3, 1);
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, p.r, 0, Math.PI*2);
+    ctx.fillStyle = p.color + (p.opacity * fade) + ')';
+    ctx.fill();
+  });
+
+  requestAnimationFrame(draw);
+}
+
+window.addEventListener('resize', resize);
+resize();
+draw();
+
+// ── SCROLL REVEAL ──
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach(e => { if(e.isIntersecting) e.target.classList.add('visible'); });
+}, { threshold: 0.1 });
+document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+
+// ── SMOOTH NAV SCROLL (fix for href="#section" in iframes/pages) ──
+document.querySelectorAll('a[href^="#"]').forEach(a => {
+  a.addEventListener('click', e => {
+    const id = a.getAttribute('href').slice(1);
+    const target = document.getElementById(id);
+    if (target) {
+      e.preventDefault();
+      target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  });
+});
+</script>
+</body>
+</html>

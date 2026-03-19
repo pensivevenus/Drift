@@ -15,7 +15,7 @@
 
   "content_scripts": [{
     "matches": ["http://*/*", "https://*/*"],
-    "js": ["content/tracker.js"],
+    "js": ["content/tracker.js", "content/interrupt.js"],
     "run_at": "document_idle"
   }],
 
@@ -29,6 +29,11 @@
     "http://*/*",
     "https://*/*"
   ],
+
+  "web_accessible_resources": [{
+    "resources": ["content/interrupt.css"],
+    "matches": ["http://*/*", "https://*/*"]
+  }],
 
   "icons": {
     "16": "assets/icon16.png",
