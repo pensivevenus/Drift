@@ -130,8 +130,7 @@ async function handleBlur(msg) {
 async function checkDrift() {
   const data = await chrome.storage.local.get([
     'active_session_id', 'active_intention', 'tab_open_timestamps',
-    'last_interrupt_time', 'last_focused_tab_id', 'last_focused_domain',
-    'last_focus_time'
+    'last_interrupt_time', 'last_focused_domain', 'last_focus_time'
   ]);
 
   const {
@@ -139,7 +138,6 @@ async function checkDrift() {
     active_intention,
     tab_open_timestamps = [],
     last_interrupt_time = 0,
-    last_focused_tab_id,
     last_focused_domain,
     last_focus_time,
   } = data;
@@ -161,39 +159,28 @@ async function checkDrift() {
 
   console.log('Drift detected — tabs:', tabDrift, 'domain:', domainDrift);
 
-  if (last_focused_tab_id) {
-    try {
-      await chrome.tabs.sendMessage(last_focused_tab_id, {
-        type: 'show_interrupt',
-        intention: active_intention,
-        tabCount: recentOpens,
-        seconds: secondsWindow,
-        reason: tabDrift ? 'tabs' : 'domain',
-      });
-      await chrome.storage.local.set({ last_interrupt_time: Date.now() });
+  try {
+    const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
+    if (!tabs[0]) return;
 
-      const session = await getSession(active_session_id);
-      if (session) {
-        session.interrupts = (session.interrupts || 0) + 1;
-        await saveSession(session);
-      }
-    } catch (e) {
-      console.log('Could not send interrupt:', e.message);
+    await chrome.tabs.sendMessage(tabs[0].id, {
+      type: 'show_interrupt',
+      intention: active_intention,
+      tabCount: recentOpens,
+      seconds: secondsWindow,
+      reason: tabDrift ? 'tabs' : 'domain',
+    });
+
+    await chrome.storage.local.set({ last_interrupt_time: Date.now() });
+
+    const session = await getSession(active_session_id);
+    if (session) {
+      session.interrupts = (session.interrupts || 0) + 1;
+      await saveSession(session);
     }
+  } catch (e) {
+    console.log('Could not send interrupt:', e.message);
   }
-}
-
-function detectTabDrift(timestamps) {
-  const recent = timestamps.filter(t => Date.now() - t < 90000);
-  return recent.length >= 4;
-}
-
-function detectDomainDrift(domain, intention, focusStart) {
-  if (!domain || !intention || !focusStart) return false;
-  if (Date.now() - focusStart < 600000) return false;
-  const words = intention.toLowerCase().split(/\s+/);
-  const domainLower = domain.toLowerCase();
-  return !words.some(word => word.length > 2 && domainLower.includes(word));
 }
 
 // ── session end ───────────────────────────────────────────
