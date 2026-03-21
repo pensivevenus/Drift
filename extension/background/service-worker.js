@@ -2,7 +2,7 @@ import { IDLE_TIMEOUT } from '../shared/constants.js';
 import { endSession } from '../shared/session.js';
 import { addEventToSession, getSession, saveSession } from '../shared/db.js';
 
-// ── receive messages from extension pages + content scripts
+// ── receive all messages ──────────────────────────────────
 chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
   if (msg.type === 'ping') {
     sendResponse({ status: 'awake' });
@@ -16,7 +16,8 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
       start_time: msg.startTime,
       tab_open_timestamps: [],
       last_interrupt_time: 0,
-      last_focused_tab_id: null,
+      last_focused_domain: null,
+      last_focus_time: null,
       last_event_time: Date.now(),
     }).then(() => {
       console.log('Drift session started:', msg.intention);
@@ -41,19 +42,16 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
   }
 
   if (msg.type === 'tab_open') {
-    if (sender.tab) msg.realTabId = sender.tab.id;
     handleTabOpen(msg);
     return true;
   }
 
   if (msg.type === 'focus') {
-    if (sender.tab) msg.realTabId = sender.tab.id;
     handleFocus(msg);
     return true;
   }
 
   if (msg.type === 'blur') {
-    if (sender.tab) msg.realTabId = sender.tab.id;
     handleBlur(msg);
     return true;
   }
@@ -94,7 +92,6 @@ async function handleFocus(msg) {
 
   await chrome.storage.local.set({
     last_event_time: Date.now(),
-    last_focused_tab_id: msg.realTabId || msg.tabId,
     last_focused_domain: msg.domain,
     last_focus_time: msg.timestamp,
   });
@@ -146,9 +143,7 @@ async function checkDrift() {
   if (Date.now() - last_interrupt_time < 300000) return;
 
   const tabDrift = detectTabDrift(tab_open_timestamps);
-  const domainDrift = detectDomainDrift(
-    last_focused_domain, active_intention, last_focus_time
-  );
+  const domainDrift = detectDomainDrift(last_focused_domain, active_intention, last_focus_time);
 
   if (!tabDrift && !domainDrift) return;
 
@@ -181,6 +176,19 @@ async function checkDrift() {
   } catch (e) {
     console.log('Could not send interrupt:', e.message);
   }
+}
+
+function detectTabDrift(timestamps) {
+  const recent = timestamps.filter(t => Date.now() - t < 90000);
+  return recent.length >= 4;
+}
+
+function detectDomainDrift(domain, intention, focusStart) {
+  if (!domain || !intention || !focusStart) return false;
+  if (Date.now() - focusStart < 600000) return false;
+  const words = intention.toLowerCase().split(/\s+/);
+  const domainLower = domain.toLowerCase();
+  return !words.some(word => word.length > 2 && domainLower.includes(word));
 }
 
 // ── session end ───────────────────────────────────────────
