@@ -1,0 +1,693 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Drift for Teams — Focus infrastructure for companies that care about deep work</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@300;400;500&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#09090f;--bg2:#0f1018;--bg3:#161720;--bg4:#1a1b26;
+  --border:rgba(255,255,255,0.07);--border2:rgba(255,255,255,0.12);
+  --text:#ede8df;--muted:rgba(237,232,223,0.45);--muted2:rgba(237,232,223,0.25);
+  --accent:#c8a97e;--accent2:#7baaa0;--red:#d4766a;--purple:#9b8ec4;
+}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;font-weight:300;line-height:1.7;overflow-x:hidden}
+
+/* GRAIN */
+body::after{content:'';position:fixed;inset:0;z-index:999;pointer-events:none;opacity:0.025;
+  background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-size:200px 200px}
+
+/* NAV */
+nav{position:fixed;top:0;left:0;right:0;z-index:100;display:flex;align-items:center;justify-content:space-between;padding:1.2rem 4rem;background:rgba(9,9,15,0.88);backdrop-filter:blur(16px);border-bottom:1px solid var(--border)}
+.nav-logo{font-family:'DM Serif Display',serif;font-size:1.5rem;color:var(--accent);letter-spacing:0.02em;text-decoration:none}
+.nav-logo span{font-size:0.75rem;font-family:'DM Mono',monospace;color:var(--accent2);letter-spacing:0.1em;margin-left:0.5rem;vertical-align:middle}
+.nav-right{display:flex;gap:1.5rem;align-items:center}
+.nav-link{font-family:'DM Mono',monospace;font-size:0.72rem;color:var(--muted);text-decoration:none;letter-spacing:0.08em;text-transform:uppercase;transition:color 0.2s}
+.nav-link:hover{color:var(--text)}
+.nav-cta{font-family:'DM Mono',monospace;font-size:0.72rem;letter-spacing:0.08em;text-transform:uppercase;padding:0.5rem 1.2rem;background:var(--accent);color:#09090f;text-decoration:none;border-radius:4px;font-weight:500;transition:all 0.2s}
+.nav-cta:hover{opacity:0.85;transform:translateY(-1px)}
+
+/* BUTTONS */
+.btn-primary{font-family:'DM Mono',monospace;font-size:0.8rem;letter-spacing:0.08em;text-transform:uppercase;font-weight:500;padding:0.9rem 2.2rem;background:var(--accent);color:#09090f;text-decoration:none;border-radius:6px;transition:all 0.25s;display:inline-flex;align-items:center;gap:0.5rem}
+.btn-primary:hover{background:#d4b88e;transform:translateY(-2px);box-shadow:0 8px 28px rgba(200,169,126,0.25)}
+.btn-secondary{font-family:'DM Mono',monospace;font-size:0.8rem;letter-spacing:0.08em;text-transform:uppercase;padding:0.9rem 2.2rem;border:1px solid var(--border);color:var(--muted);text-decoration:none;border-radius:6px;transition:all 0.25s;display:inline-flex;align-items:center;gap:0.5rem}
+.btn-secondary:hover{border-color:rgba(255,255,255,0.2);color:var(--text);transform:translateY(-2px)}
+.btn-accent2{font-family:'DM Mono',monospace;font-size:0.8rem;letter-spacing:0.08em;text-transform:uppercase;font-weight:500;padding:0.9rem 2.2rem;background:var(--accent2);color:#09090f;text-decoration:none;border-radius:6px;transition:all 0.25s;display:inline-flex;align-items:center;gap:0.5rem}
+.btn-accent2:hover{background:#8ec4ba;transform:translateY(-2px);box-shadow:0 8px 24px rgba(123,170,160,0.25)}
+
+/* HERO */
+.hero{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:8rem 2rem 5rem;position:relative;overflow:hidden}
+.hero-bg{position:absolute;inset:0;z-index:0}
+.hero-bg::before{content:'';position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:800px;height:800px;background:radial-gradient(circle,rgba(123,170,160,0.06) 0%,rgba(200,169,126,0.04) 40%,transparent 70%);pointer-events:none}
+/* animated grid lines */
+.grid-line{position:absolute;background:linear-gradient(90deg,transparent,rgba(255,255,255,0.03),transparent);height:1px;width:100%;animation:gridPulse 6s ease-in-out infinite}
+.grid-line:nth-child(1){top:20%;animation-delay:0s}
+.grid-line:nth-child(2){top:35%;animation-delay:1s}
+.grid-line:nth-child(3){top:50%;animation-delay:2s}
+.grid-line:nth-child(4){top:65%;animation-delay:3s}
+.grid-line:nth-child(5){top:80%;animation-delay:4s}
+@keyframes gridPulse{0%,100%{opacity:0.3}50%{opacity:1}}
+
+.hero-content{position:relative;z-index:1;max-width:820px}
+.hero-eyebrow{display:inline-flex;align-items:center;gap:0.6rem;font-family:'DM Mono',monospace;font-size:0.68rem;letter-spacing:0.15em;text-transform:uppercase;color:var(--accent2);border:1px solid rgba(123,170,160,0.3);padding:0.3rem 0.9rem;border-radius:100px;margin-bottom:2rem;animation:fadeUp 0.8s ease forwards;opacity:0}
+.hero-title{font-family:'DM Serif Display',serif;font-size:clamp(2.8rem,6vw,5rem);line-height:1.1;letter-spacing:-0.02em;margin-bottom:1.5rem;animation:fadeUp 0.8s 0.15s ease forwards;opacity:0}
+.hero-title em{font-style:italic;color:var(--accent)}
+.hero-title .highlight{color:var(--accent2)}
+.hero-sub{font-size:1.05rem;color:var(--muted);max-width:560px;margin:0 auto 3rem;animation:fadeUp 0.8s 0.3s ease forwards;opacity:0}
+.hero-actions{display:flex;gap:1rem;justify-content:center;flex-wrap:wrap;animation:fadeUp 0.8s 0.45s ease forwards;opacity:0}
+
+/* STAT STRIP */
+.stat-strip{background:var(--bg2);border-top:1px solid var(--border);border-bottom:1px solid var(--border);padding:2rem;display:flex;justify-content:center;gap:0;overflow:hidden}
+.stat-item{flex:1;max-width:220px;text-align:center;padding:0 2rem;border-right:1px solid var(--border)}
+.stat-item:last-child{border-right:none}
+.stat-num{font-family:'DM Serif Display',serif;font-size:2.5rem;color:var(--accent);line-height:1}
+.stat-desc{font-size:0.8rem;color:var(--muted);margin-top:0.3rem;font-family:'DM Mono',monospace;font-size:0.68rem;letter-spacing:0.05em}
+
+/* SECTION BASE */
+section{padding:6rem 2rem}
+.container{max-width:1100px;margin:0 auto}
+.section-label{font-family:'DM Mono',monospace;font-size:0.68rem;letter-spacing:0.15em;text-transform:uppercase;color:var(--accent);margin-bottom:1rem}
+.section-title{font-family:'DM Serif Display',serif;font-size:clamp(2rem,4vw,3rem);line-height:1.15;margin-bottom:1.2rem}
+.section-sub{color:var(--muted);font-size:1rem;max-width:540px}
+.divider{height:1px;background:linear-gradient(90deg,transparent,var(--border),transparent);margin:0 4rem}
+.centered{text-align:center}
+.centered .section-sub{margin:0 auto}
+
+/* PROBLEM */
+.problem-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--border);border:1px solid var(--border);border-radius:16px;overflow:hidden;margin-top:3.5rem}
+.problem-card{background:var(--bg2);padding:2rem 1.8rem}
+.problem-num{font-family:'DM Mono',monospace;font-size:0.65rem;letter-spacing:0.12em;text-transform:uppercase;color:var(--muted2);margin-bottom:1rem}
+.problem-card h3{font-family:'DM Serif Display',serif;font-size:1.2rem;font-weight:400;margin-bottom:0.6rem;line-height:1.3}
+.problem-card p{font-size:0.85rem;color:var(--muted);line-height:1.65}
+.problem-stat{font-family:'DM Mono',monospace;font-size:0.75rem;color:var(--red);margin-top:0.8rem;padding-top:0.8rem;border-top:1px solid var(--border)}
+
+/* WORKFLOW */
+.workflow-bg{background:var(--bg2)}
+.workflow-steps{display:flex;flex-direction:column;gap:0;margin-top:3.5rem;border:1px solid var(--border);border-radius:16px;overflow:hidden}
+.workflow-step{display:grid;grid-template-columns:80px 1fr 1fr;gap:0;align-items:stretch;border-bottom:1px solid var(--border)}
+.workflow-step:last-child{border-bottom:none}
+.workflow-step:hover{background:rgba(255,255,255,0.015)}
+.ws-num{display:flex;align-items:center;justify-content:center;padding:2rem;border-right:1px solid var(--border);font-family:'DM Serif Display',serif;font-size:2rem;color:var(--accent);opacity:0.4}
+.ws-content{padding:1.8rem 2rem;border-right:1px solid var(--border)}
+.ws-content h3{font-family:'DM Serif Display',serif;font-size:1.15rem;font-weight:400;margin-bottom:0.5rem}
+.ws-content p{font-size:0.85rem;color:var(--muted);line-height:1.65}
+.ws-result{padding:1.8rem 2rem;display:flex;flex-direction:column;justify-content:center}
+.ws-result-label{font-family:'DM Mono',monospace;font-size:0.6rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted2);margin-bottom:0.4rem}
+.ws-result-val{font-size:0.88rem;color:var(--accent2)}
+
+/* PERSONAS */
+.personas-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1.2rem;margin-top:3.5rem}
+.persona-card{background:var(--bg2);border:1px solid var(--border);border-radius:16px;padding:2rem;transition:all 0.25s;position:relative;overflow:hidden}
+.persona-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px}
+.persona-card.startup::before{background:linear-gradient(90deg,var(--accent),var(--orange,#d4956a))}
+.persona-card.remote::before{background:linear-gradient(90deg,var(--accent2),var(--purple))}
+.persona-card.dev::before{background:linear-gradient(90deg,var(--purple),var(--accent2))}
+.persona-card:hover{border-color:var(--border2);transform:translateY(-2px)}
+.persona-icon{font-size:2rem;margin-bottom:1rem}
+.persona-card h3{font-family:'DM Serif Display',serif;font-size:1.2rem;font-weight:400;margin-bottom:0.4rem}
+.persona-tag{font-family:'DM Mono',monospace;font-size:0.62rem;letter-spacing:0.08em;text-transform:uppercase;color:var(--muted2);margin-bottom:0.8rem}
+.persona-card p{font-size:0.85rem;color:var(--muted);line-height:1.65;margin-bottom:1rem}
+.persona-wins{list-style:none;display:flex;flex-direction:column;gap:0.35rem}
+.persona-wins li{font-size:0.8rem;color:var(--muted);display:flex;gap:0.5rem;align-items:flex-start}
+.persona-wins li::before{content:'→';color:var(--accent);font-family:'DM Mono',monospace;flex-shrink:0}
+
+/* OPEN SOURCE */
+.oss-grid{display:grid;grid-template-columns:1fr 1fr;gap:4rem;align-items:center;margin-top:3.5rem}
+.oss-points{display:flex;flex-direction:column;gap:1.2rem}
+.oss-point{display:flex;gap:1.2rem;align-items:flex-start}
+.oss-icon{width:40px;height:40px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:1.1rem;flex-shrink:0}
+.oss-point h4{font-size:0.95rem;font-weight:500;margin-bottom:0.2rem}
+.oss-point p{font-size:0.82rem;color:var(--muted);line-height:1.6}
+.oss-code{background:var(--bg);border:1px solid var(--border);border-radius:14px;padding:2rem;font-family:'DM Mono',monospace;font-size:0.72rem;line-height:1.9;color:var(--muted)}
+.oss-code .c{color:rgba(237,232,223,0.2)}
+.oss-code .k{color:var(--accent2)}
+.oss-code .v{color:var(--accent)}
+.oss-code .g{color:var(--green,#7aab85)}
+
+/* INTEGRATIONS */
+.integrations-bg{background:var(--bg2)}
+.integrations-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:1rem;margin-top:3.5rem}
+.integration-card{background:var(--bg);border:1px solid var(--border);border-radius:12px;padding:1.5rem 1.2rem;text-align:center;transition:all 0.2s}
+.integration-card:hover{border-color:var(--border2);transform:translateY(-2px)}
+.integration-icon{font-size:1.8rem;margin-bottom:0.7rem}
+.integration-card h4{font-size:0.9rem;font-weight:400;margin-bottom:0.3rem;font-family:'DM Serif Display',serif}
+.integration-card p{font-size:0.75rem;color:var(--muted);line-height:1.55}
+.integration-tag{font-family:'DM Mono',monospace;font-size:0.55rem;letter-spacing:0.08em;text-transform:uppercase;padding:0.15rem 0.45rem;border-radius:4px;margin-top:0.6rem;display:inline-block}
+.tag-now{background:rgba(123,170,160,0.15);color:var(--accent2)}
+.tag-soon{background:rgba(200,169,126,0.12);color:var(--accent)}
+.tag-future{background:rgba(155,142,196,0.12);color:var(--purple)}
+
+/* ROADMAP */
+.roadmap-list{display:flex;flex-direction:column;gap:0;margin-top:3.5rem;border:1px solid var(--border);border-radius:16px;overflow:hidden}
+.roadmap-item{display:flex;align-items:center;gap:2rem;padding:1.4rem 2rem;border-bottom:1px solid var(--border);transition:background 0.2s}
+.roadmap-item:last-child{border-bottom:none}
+.roadmap-item:hover{background:rgba(255,255,255,0.015)}
+.roadmap-phase{font-family:'DM Mono',monospace;font-size:0.62rem;letter-spacing:0.1em;text-transform:uppercase;width:80px;flex-shrink:0}
+.phase-now{color:var(--accent2)}
+.phase-soon{color:var(--accent)}
+.phase-future{color:var(--purple)}
+.roadmap-content{flex:1}
+.roadmap-content h4{font-size:0.92rem;font-weight:400;margin-bottom:0.2rem}
+.roadmap-content p{font-size:0.78rem;color:var(--muted)}
+.roadmap-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.dot-now{background:var(--accent2)}
+.dot-soon{background:var(--accent)}
+.dot-future{background:var(--purple);opacity:0.5}
+
+/* CTA */
+.cta-section{text-align:center;padding:8rem 2rem;position:relative;overflow:hidden}
+.cta-glow{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:600px;height:400px;background:radial-gradient(ellipse,rgba(123,170,160,0.07) 0%,rgba(200,169,126,0.04) 50%,transparent 70%);pointer-events:none}
+.cta-section .section-title{font-size:clamp(2.2rem,5vw,3.8rem);margin-bottom:1.2rem}
+.cta-section .section-sub{margin:0 auto 3rem}
+.cta-actions{display:flex;gap:1rem;justify-content:center;flex-wrap:wrap}
+.copy-btn{font-family:'DM Mono',monospace;font-size:0.8rem;letter-spacing:0.08em;text-transform:uppercase;padding:0.9rem 2.2rem;border:1px solid var(--border);color:var(--muted);background:transparent;border-radius:6px;cursor:pointer;transition:all 0.25s;display:inline-flex;align-items:center;gap:0.5rem}
+.copy-btn:hover{border-color:rgba(255,255,255,0.2);color:var(--text)}
+
+/* FOOTER */
+footer{padding:3rem 4rem;border-top:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:1rem}
+.footer-logo{font-family:'DM Serif Display',serif;font-size:1.2rem;color:var(--accent)}
+.footer-links{display:flex;gap:2rem}
+.footer-links a{font-family:'DM Mono',monospace;font-size:0.65rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);text-decoration:none;transition:color 0.2s}
+.footer-links a:hover{color:var(--text)}
+.footer-meta{font-family:'DM Mono',monospace;font-size:0.65rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted)}
+
+/* REVEAL */
+.reveal{opacity:0;transform:translateY(24px);transition:opacity 0.7s ease,transform 0.7s ease}
+.reveal.visible{opacity:1;transform:translateY(0)}
+
+@keyframes fadeUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+
+/* RESPONSIVE */
+@media(max-width:900px){
+  nav{padding:1rem 1.5rem}
+  .problem-grid,.personas-grid{grid-template-columns:1fr}
+  .integrations-grid{grid-template-columns:1fr 1fr}
+  .oss-grid{grid-template-columns:1fr;gap:2.5rem}
+  .workflow-step{grid-template-columns:60px 1fr}
+  .ws-result{display:none}
+  .stat-strip{flex-wrap:wrap}
+  .stat-item{border-right:none;border-bottom:1px solid var(--border);min-width:50%}
+  footer{flex-direction:column;align-items:flex-start;padding:2rem 1.5rem}
+}
+@media(max-width:600px){
+  .integrations-grid{grid-template-columns:1fr}
+  .nav-right .nav-link{display:none}
+}
+</style>
+</head>
+<body>
+
+<nav>
+  <a href="index.html" class="nav-logo">Drift <span>for teams</span></a>
+  <div class="nav-right">
+    <a href="#problem" class="nav-link">Problem</a>
+    <a href="#workflow" class="nav-link">Workflow</a>
+    <a href="#integrations" class="nav-link">Integrations</a>
+    <a href="#roadmap" class="nav-link">Roadmap</a>
+    <a href="index.html" class="nav-link">← Back</a>
+    <a href="app.html" class="nav-cta">Try Drift →</a>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-bg">
+    <div class="grid-line"></div>
+    <div class="grid-line"></div>
+    <div class="grid-line"></div>
+    <div class="grid-line"></div>
+    <div class="grid-line"></div>
+  </div>
+  <div class="hero-content">
+    <span class="hero-eyebrow">
+      <svg width="8" height="8" viewBox="0 0 8 8"><circle cx="4" cy="4" r="4" fill="currentColor"/></svg>
+      Drift for Teams
+    </span>
+    <h1 class="hero-title">Your team is losing hours<br>to distraction.<br><em>Drift shows you where.</em></h1>
+    <p class="hero-sub">A fully local, open-source focus system that gives individuals the tools to do their best work — and gives teams an honest picture of where attention actually goes.</p>
+    <div class="hero-actions">
+      <a href="#workflow" class="btn-accent2">See how it works</a>
+      <a href="https://github.com/pensivevenus/Drift" target="_blank" class="btn-secondary">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z"/></svg>
+        View Source
+      </a>
+    </div>
+  </div>
+</section>
+
+<!-- STAT STRIP -->
+<div class="stat-strip">
+  <div class="stat-item">
+    <div class="stat-num">58%</div>
+    <div class="stat-desc">of workday spent on reactive work, not deep work*</div>
+  </div>
+  <div class="stat-item">
+    <div class="stat-num">23m</div>
+    <div class="stat-desc">average time to regain focus after an interruption*</div>
+  </div>
+  <div class="stat-item">
+    <div class="stat-num">$0</div>
+    <div class="stat-desc">cost to deploy Drift across your entire team</div>
+  </div>
+  <div class="stat-item">
+    <div class="stat-num">0</div>
+    <div class="stat-desc">bytes of employee data ever leaving their device</div>
+  </div>
+</div>
+
+<div class="divider"></div>
+
+<!-- PROBLEM -->
+<section id="problem">
+  <div class="container">
+    <div class="reveal centered">
+      <div class="section-label">The Problem</div>
+      <h2 class="section-title">Deep work is dying in modern teams.</h2>
+      <p class="section-sub">Not because people are lazy. Because there's no feedback loop between intention and action.</p>
+    </div>
+    <div class="problem-grid reveal">
+      <div class="problem-card">
+        <div class="problem-num">01</div>
+        <h3>No visibility into focus time</h3>
+        <p>Managers track output, not the conditions that produce it. There's no way to know if your team had four hours of deep work or forty context switches.</p>
+        <div class="problem-stat">→ Most teams have zero focus metrics</div>
+      </div>
+      <div class="problem-card">
+        <div class="problem-num">02</div>
+        <h3>Notifications kill flow before it starts</h3>
+        <p>Slack pings, email alerts, calendar reminders — the average knowledge worker is interrupted every 3 minutes. Real focus never has a chance to begin.</p>
+        <div class="problem-stat">→ 3 min avg. time between interruptions*</div>
+      </div>
+      <div class="problem-card">
+        <div class="problem-num">03</div>
+        <h3>Tab switching is invisible drift</h3>
+        <p>Opening 8 tabs while "working" looks like productivity. It isn't. Without tracking, this drift goes completely unnoticed until the deadline arrives.</p>
+        <div class="problem-stat">→ Workers avg. 10+ tab switches per task*</div>
+      </div>
+      <div class="problem-card">
+        <div class="problem-num">04</div>
+        <h3>Existing tools are too aggressive</h3>
+        <p>Website blockers create resentment. Time trackers feel like surveillance. Neither addresses the actual moment distraction begins.</p>
+        <div class="problem-stat">→ 67% abandon focus tools within a week*</div>
+      </div>
+      <div class="problem-card">
+        <div class="problem-num">05</div>
+        <h3>Remote teams drift without accountability</h3>
+        <p>In-office presence created implicit focus pressure. Remote work removed that without replacing it with anything better. Drift fills that gap — privately.</p>
+        <div class="problem-stat">→ Remote workers report 40% more distraction*</div>
+      </div>
+      <div class="problem-card">
+        <div class="problem-num">06</div>
+        <h3>Data privacy blocks adoption</h3>
+        <p>Most productivity tools require accounts, cloud sync, and data sharing. IT won't approve them. Employees won't trust them. Drift sidesteps all of this.</p>
+        <div class="problem-stat">→ 100% local, zero compliance risk</div>
+      </div>
+    </div>
+    <p style="font-size:0.7rem;color:var(--muted2);font-family:'DM Mono',monospace;margin-top:1.5rem;text-align:center">* Industry research aggregated from Microsoft WorkLab, RescueTime, and UC Irvine studies</p>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- WORKFLOW -->
+<section id="workflow" class="workflow-bg">
+  <div class="container">
+    <div class="reveal centered">
+      <div class="section-label">Team Workflow</div>
+      <h2 class="section-title">How Drift fits into how your team already works.</h2>
+      <p class="section-sub">No onboarding. No training. No process change. Just install and start.</p>
+    </div>
+    <div class="workflow-steps reveal">
+      <div class="workflow-step">
+        <div class="ws-num">1</div>
+        <div class="ws-content">
+          <h3>Developer starts a sprint task</h3>
+          <p>Opens a new tab, sees the Drift intention prompt. Types "implement auth flow — ticket #247". Presses Enter. Drift begins silently tracking the session.</p>
+        </div>
+        <div class="ws-result">
+          <div class="ws-result-label">What Drift captures</div>
+          <div class="ws-result-val">Session start, intention, timestamp → IndexedDB</div>
+        </div>
+      </div>
+      <div class="workflow-step">
+        <div class="ws-num">2</div>
+        <div class="ws-content">
+          <h3>They open 6 tabs in 30 seconds</h3>
+          <p>Stack Overflow, GitHub, docs, Twitter. Drift detects the tab burst. A gentle overlay appears — not a block, just a mirror: "You meant to implement auth flow." Two options: keep going or refocus.</p>
+        </div>
+        <div class="ws-result">
+          <div class="ws-result-label">What happens</div>
+          <div class="ws-result-val">Soft interrupt — no alarm, no shame, just awareness</div>
+        </div>
+      </div>
+      <div class="workflow-step">
+        <div class="ws-num">3</div>
+        <div class="ws-content">
+          <h3>Pomodoro ends after 25 minutes</h3>
+          <p>The Web Audio chime plays. Session closes. The river map renders — a canvas visualisation of every domain visited, time on each, colour-coded by site. The honest picture of the last 25 minutes.</p>
+        </div>
+        <div class="ws-result">
+          <div class="ws-result-label">Output</div>
+          <div class="ws-result-val">River map PNG/SVG — shareable in standups</div>
+        </div>
+      </div>
+      <div class="workflow-step">
+        <div class="ws-num">4</div>
+        <div class="ws-content">
+          <h3>Team lead shares their river map in standup</h3>
+          <p>Not to prove productivity — to model honest self-reflection. "Here's my session from yesterday. I got pulled into Slack for 40 minutes during what I thought was a deep work block." Culture shift starts here.</p>
+        </div>
+        <div class="ws-result">
+          <div class="ws-result-label">Team impact</div>
+          <div class="ws-result-val">Psychological safety around focus — not surveillance</div>
+        </div>
+      </div>
+      <div class="workflow-step">
+        <div class="ws-num">5</div>
+        <div class="ws-content">
+          <h3>Designer uses the web app during UI work</h3>
+          <p>Opens app.html, adds tasks from today's design brief, starts a pomodoro. Drift bridges the intention to the extension — every new tab automatically shows the current task. No re-typing. No friction.</p>
+        </div>
+        <div class="ws-result">
+          <div class="ws-result-label">Bridge mechanism</div>
+          <div class="ws-result-val">localStorage → extension reads on every new tab</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- PERSONAS -->
+<section id="personas">
+  <div class="container">
+    <div class="reveal centered">
+      <div class="section-label">Who it's for</div>
+      <h2 class="section-title">Three teams. One tool.</h2>
+    </div>
+    <div class="personas-grid reveal">
+      <div class="persona-card startup">
+        <div class="persona-icon">🚀</div>
+        <h3>Early-stage startups</h3>
+        <div class="persona-tag">5–30 people · everyone wears many hats</div>
+        <p>When everyone is doing three jobs, focus is the only competitive advantage. Drift helps small teams protect deep work time without adding process overhead.</p>
+        <ul class="persona-wins">
+          <li>Set daily intentions tied to current sprint goals</li>
+          <li>Pomodoro rhythm keeps energy sustainable during crunch</li>
+          <li>River maps reveal where time actually went vs where it was planned</li>
+          <li>Zero setup — works on day one, no IT required</li>
+        </ul>
+      </div>
+      <div class="persona-card remote">
+        <div class="persona-icon">🌐</div>
+        <h3>Remote & async teams</h3>
+        <div class="persona-tag">Distributed · timezone-split · async-first</div>
+        <p>Remote work removed office focus pressure without replacing it. Drift gives each team member a personal accountability loop that works entirely in their own browser.</p>
+        <ul class="persona-wins">
+          <li>No shared dashboard needed — privacy is built in</li>
+          <li>Async standup: share your river map export instead of a status update</li>
+          <li>Streak counter builds consistent daily focus habits</li>
+          <li>Works offline — no wifi, no problem</li>
+        </ul>
+      </div>
+      <div class="persona-card dev">
+        <div class="persona-icon">⌨️</div>
+        <h3>Engineering teams</h3>
+        <div class="persona-tag">Developers · sprint culture · deep work heavy</div>
+        <p>Engineers already understand the value of flow state. Drift speaks their language — open source, no accounts, local-first, fully auditable. It fits naturally into existing sprint culture.</p>
+        <ul class="persona-wins">
+          <li>Intention = current ticket number — natural pairing with Jira/Linear</li>
+          <li>Tab burst detection catches context switching before it derails a session</li>
+          <li>River map exports for sprint retrospectives</li>
+          <li>Apache 2.0 — fork it, extend it, own it</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- OPEN SOURCE ADVANTAGE -->
+<section id="oss" class="workflow-bg">
+  <div class="container">
+    <div class="oss-grid">
+      <div class="reveal">
+        <div class="section-label">Open Source Advantage</div>
+        <h2 class="section-title">Zero compliance risk.<br>Full transparency.</h2>
+        <p style="color:var(--muted);margin-bottom:2rem;font-size:0.95rem">Most productivity tools are SaaS products that collect usage data on your employees. Drift takes the opposite position.</p>
+        <div class="oss-points">
+          <div class="oss-point">
+            <div class="oss-icon" style="background:rgba(123,170,160,0.12);color:var(--accent2)">🔒</div>
+            <div>
+              <h4>No data leaves the device</h4>
+              <p>Everything lives in IndexedDB and localStorage on the employee's machine. IT never needs to approve it. Legal never needs to review it.</p>
+            </div>
+          </div>
+          <div class="oss-point">
+            <div class="oss-icon" style="background:rgba(200,169,126,0.12);color:var(--accent)">📋</div>
+            <div>
+              <h4>Fully auditable codebase</h4>
+              <p>Every line of code is public on GitHub. Your security team can review exactly what the extension does before anyone installs it.</p>
+            </div>
+          </div>
+          <div class="oss-point">
+            <div class="oss-icon" style="background:rgba(155,142,196,0.12);color:var(--purple)">⚙️</div>
+            <div>
+              <h4>Fork and customize</h4>
+              <p>Apache 2.0 license. Build your own version. Add your company logo, change thresholds, integrate with internal tools. No vendor permission needed.</p>
+            </div>
+          </div>
+          <div class="oss-point">
+            <div class="oss-icon" style="background:rgba(122,171,133,0.12);color:#7aab85">💸</div>
+            <div>
+              <h4>Free forever</h4>
+              <p>No per-seat pricing. No enterprise tier. No upsell. Deploy to 5 people or 500 — the cost is identical: zero.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="oss-code reveal">
+        <span class="c">// What the extension stores</span><br>
+        <span class="c">// (everything stays local)</span><br><br>
+        IndexedDB:<br>
+        &nbsp;&nbsp;<span class="k">sessions</span> → <span class="v">events, domain names, duration</span><br>
+        &nbsp;&nbsp;<span class="k">history</span> → <span class="v">30 days, then auto-pruned</span><br><br>
+        localStorage:<br>
+        &nbsp;&nbsp;<span class="k">drift_intention</span> → <span class="v">"current task"</span><br>
+        &nbsp;&nbsp;<span class="k">drift_active_session</span> → <span class="v">UUID</span><br>
+        &nbsp;&nbsp;<span class="k">drift_tasks</span> → <span class="v">todo list JSON</span><br><br>
+        <span class="c">// What is never stored</span><br>
+        <span class="g">✓ No full URLs</span><br>
+        <span class="g">✓ No page content</span><br>
+        <span class="g">✓ No keystrokes</span><br>
+        <span class="g">✓ No analytics</span><br>
+        <span class="g">✓ No remote server</span><br>
+        <span class="g">✓ No account required</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- INTEGRATIONS -->
+<section id="integrations" class="integrations-bg">
+  <div class="container">
+    <div class="reveal centered">
+      <div class="section-label">Integrations</div>
+      <h2 class="section-title">Works with your existing stack.</h2>
+      <p class="section-sub">Current integrations are intentional and lightweight. The roadmap goes further.</p>
+    </div>
+    <div class="integrations-grid reveal">
+      <div class="integration-card">
+        <div class="integration-icon">📝</div>
+        <h4>Notion</h4>
+        <p>Copy your current Notion task title as your Drift intention. River map exports pair naturally with Notion session logs.</p>
+        <span class="integration-tag tag-now">Works now</span>
+      </div>
+      <div class="integration-card">
+        <div class="integration-icon">⚡</div>
+        <h4>Linear / Jira</h4>
+        <p>Set intention = ticket ID. Session history maps directly to sprint velocity. Export river maps into retro docs.</p>
+        <span class="integration-tag tag-now">Works now</span>
+      </div>
+      <div class="integration-card">
+        <div class="integration-icon">💬</div>
+        <h4>Slack</h4>
+        <p>Post session summaries to a team channel. Auto-set Slack status to "In a focus session" when a pomodoro starts.</p>
+        <span class="integration-tag tag-soon">Planned</span>
+      </div>
+      <div class="integration-card">
+        <div class="integration-icon">📊</div>
+        <h4>Team Dashboard</h4>
+        <p>Aggregate river maps across a team. Opt-in only. See collective focus patterns without individual surveillance.</p>
+        <span class="integration-tag tag-future">Roadmap</span>
+      </div>
+      <div class="integration-card">
+        <div class="integration-icon">🗓️</div>
+        <h4>Google Calendar</h4>
+        <p>Auto-start a Drift session when a focus block begins on your calendar. End it when the next meeting starts.</p>
+        <span class="integration-tag tag-soon">Planned</span>
+      </div>
+      <div class="integration-card">
+        <div class="integration-icon">🔁</div>
+        <h4>GitHub</h4>
+        <p>Link sessions to commits. See which focus sessions produced which code. Closes the loop between attention and output.</p>
+        <span class="integration-tag tag-future">Roadmap</span>
+      </div>
+      <div class="integration-card">
+        <div class="integration-icon">📈</div>
+        <h4>Analytics Export</h4>
+        <p>Export aggregated focus data as CSV. Feed into your own BI tools, Notion databases, or Google Sheets.</p>
+        <span class="integration-tag tag-soon">Planned</span>
+      </div>
+      <div class="integration-card">
+        <div class="integration-icon">🔧</div>
+        <h4>Custom via API</h4>
+        <p>Open source means you build what you need. The localStorage bridge is documented and simple to extend.</p>
+        <span class="integration-tag tag-now">Works now</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ROADMAP -->
+<section id="roadmap">
+  <div class="container">
+    <div class="reveal centered">
+      <div class="section-label">Roadmap</div>
+      <h2 class="section-title">Where Drift is going.</h2>
+      <p class="section-sub">This is a vision, not a promise. Built in public, on GitHub, with full transparency.</p>
+    </div>
+    <div class="roadmap-list reveal">
+      <div class="roadmap-item">
+        <div class="roadmap-dot dot-now"></div>
+        <div class="roadmap-phase phase-now">Now</div>
+        <div class="roadmap-content">
+          <h4>Core focus system — web app + extension</h4>
+          <p>Pomodoro timer, todo list, drift detection, river map, ambient sounds, GIF backgrounds, full localStorage bridge</p>
+        </div>
+      </div>
+      <div class="roadmap-item">
+        <div class="roadmap-dot dot-now"></div>
+        <div class="roadmap-phase phase-now">Now</div>
+        <div class="roadmap-content">
+          <h4>Session history + river map export</h4>
+          <p>30-day IndexedDB history, re-render any past session, export as PNG or SVG for retrospectives</p>
+        </div>
+      </div>
+      <div class="roadmap-item">
+        <div class="roadmap-dot dot-soon"></div>
+        <div class="roadmap-phase phase-soon">Soon</div>
+        <div class="roadmap-content">
+          <h4>PWA — offline support + install to desktop</h4>
+          <p>Service worker caching, installable on any OS, works fully without internet connection</p>
+        </div>
+      </div>
+      <div class="roadmap-item">
+        <div class="roadmap-dot dot-soon"></div>
+        <div class="roadmap-phase phase-soon">Soon</div>
+        <div class="roadmap-content">
+          <h4>Slack status integration</h4>
+          <p>Auto-set status to "In a focus session" when a pomodoro starts, clear it on break</p>
+        </div>
+      </div>
+      <div class="roadmap-item">
+        <div class="roadmap-dot dot-soon"></div>
+        <div class="roadmap-phase phase-soon">Soon</div>
+        <div class="roadmap-content">
+          <h4>Calendar-triggered sessions</h4>
+          <p>Auto-start Drift when a focus block appears on Google Calendar or Outlook</p>
+        </div>
+      </div>
+      <div class="roadmap-item">
+        <div class="roadmap-dot dot-future"></div>
+        <div class="roadmap-phase phase-future">Future</div>
+        <div class="roadmap-content">
+          <h4>Opt-in team dashboard</h4>
+          <p>Aggregate river maps across a team. Fully opt-in, no individual tracking, no surveillance — just collective focus patterns</p>
+        </div>
+      </div>
+      <div class="roadmap-item">
+        <div class="roadmap-dot dot-future"></div>
+        <div class="roadmap-phase phase-future">Future</div>
+        <div class="roadmap-content">
+          <h4>GitHub commit linking</h4>
+          <p>Match focus sessions to commits. See which attention patterns produce the best code.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- CTA -->
+<section class="cta-section">
+  <div class="cta-glow"></div>
+  <div class="container reveal">
+    <div class="section-label centered">Get started</div>
+    <h2 class="section-title">Try it with your team today.</h2>
+    <p class="section-sub">Free. Open source. No account. No data leaving anyone's device. Takes 60 seconds to install.</p>
+    <div class="cta-actions">
+      <a href="app.html" class="btn-primary">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><polygon points="10 8 16 12 10 16 10 8"/></svg>
+        Open Drift Focus
+      </a>
+      <a href="https://github.com/pensivevenus/Drift" target="_blank" class="btn-accent2">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z"/></svg>
+        View on GitHub
+      </a>
+      <button class="copy-btn" onclick="copyLink()">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+        <span id="copy-label">Share with team</span>
+      </button>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <span class="footer-logo">Drift</span>
+  <div class="footer-links">
+    <a href="index.html">Home</a>
+    <a href="app.html">Web App</a>
+    <a href="https://github.com/pensivevenus/Drift" target="_blank">GitHub</a>
+  </div>
+  <span class="footer-meta">Apache 2.0 · No backend · No tracking</span>
+</footer>
+
+<script>
+// Scroll reveal
+const observer = new IntersectionObserver(entries => {
+  entries.forEach(e => { if(e.isIntersecting) e.target.classList.add('visible'); });
+}, { threshold: 0.1 });
+document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+
+// Smooth nav scroll
+document.querySelectorAll('a[href^="#"]').forEach(a => {
+  a.addEventListener('click', e => {
+    const id = a.getAttribute('href').slice(1);
+    const target = document.getElementById(id);
+    if(target){ e.preventDefault(); target.scrollIntoView({ behavior:'smooth', block:'start' }); }
+  });
+});
+
+// Copy link
+function copyLink() {
+  navigator.clipboard.writeText(window.location.href).then(() => {
+    document.getElementById('copy-label').textContent = 'Link copied!';
+    setTimeout(() => document.getElementById('copy-label').textContent = 'Share with team', 2000);
+  });
+}
+</script>
+</body>
+</html>

@@ -1628,6 +1628,11 @@
       function startTimer() {
         isRunning = true;
         document.getElementById("pomo-start-btn").textContent = "⏸ Pause";
+
+        // drift extension bridge
+        localStorage.setItem("drift_active_session", crypto.randomUUID());
+        localStorage.setItem("drift_start_time", Date.now());
+
         timerInterval = setInterval(() => {
           timeLeft--;
           updateDisp();
