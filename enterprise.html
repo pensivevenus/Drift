@@ -42,16 +42,8 @@ nav{position:fixed;top:0;left:0;right:0;z-index:100;display:flex;align-items:cen
 
 /* HERO */
 .hero{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:8rem 2rem 5rem;position:relative;overflow:hidden}
-.hero-bg{position:absolute;inset:0;z-index:0}
-.hero-bg::before{content:'';position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:800px;height:800px;background:radial-gradient(circle,rgba(123,170,160,0.06) 0%,rgba(200,169,126,0.04) 40%,transparent 70%);pointer-events:none}
-/* animated grid lines */
-.grid-line{position:absolute;background:linear-gradient(90deg,transparent,rgba(255,255,255,0.03),transparent);height:1px;width:100%;animation:gridPulse 6s ease-in-out infinite}
-.grid-line:nth-child(1){top:20%;animation-delay:0s}
-.grid-line:nth-child(2){top:35%;animation-delay:1s}
-.grid-line:nth-child(3){top:50%;animation-delay:2s}
-.grid-line:nth-child(4){top:65%;animation-delay:3s}
-.grid-line:nth-child(5){top:80%;animation-delay:4s}
-@keyframes gridPulse{0%,100%{opacity:0.3}50%{opacity:1}}
+.hero-bg{position:absolute;inset:0;z-index:0;overflow:hidden}
+#enterprise-canvas{position:absolute;inset:0;width:100%;height:100%;z-index:0}
 
 .hero-content{position:relative;z-index:1;max-width:820px}
 .hero-eyebrow{display:inline-flex;align-items:center;gap:0.6rem;font-family:'DM Mono',monospace;font-size:0.68rem;letter-spacing:0.15em;text-transform:uppercase;color:var(--accent2);border:1px solid rgba(123,170,160,0.3);padding:0.3rem 0.9rem;border-radius:100px;margin-bottom:2rem;animation:fadeUp 0.8s ease forwards;opacity:0}
@@ -217,11 +209,7 @@ footer{padding:3rem 4rem;border-top:1px solid var(--border);display:flex;align-i
 <!-- HERO -->
 <section class="hero">
   <div class="hero-bg">
-    <div class="grid-line"></div>
-    <div class="grid-line"></div>
-    <div class="grid-line"></div>
-    <div class="grid-line"></div>
-    <div class="grid-line"></div>
+    <canvas id="enterprise-canvas"></canvas>
   </div>
   <div class="hero-content">
     <span class="hero-eyebrow">
@@ -666,6 +654,190 @@ footer{padding:3rem 4rem;border-top:1px solid var(--border);display:flex;align-i
 </footer>
 
 <script>
+// ── HERO CANVAS ANIMATION ──
+(function(){
+  const canvas = document.getElementById('enterprise-canvas');
+  if(!canvas) return;
+  const ctx = canvas.getContext('2d');
+  let W, H, particles = [], streams = [], nodes = [], mouseX = 0, mouseY = 0;
+
+  function resize(){
+    W = canvas.width = canvas.offsetWidth;
+    H = canvas.height = canvas.offsetHeight;
+    initScene();
+  }
+
+  function initScene(){
+    // Network nodes
+    nodes = [];
+    const count = Math.floor(W * H / 18000);
+    for(let i = 0; i < count; i++){
+      nodes.push({
+        x: Math.random() * W,
+        y: Math.random() * H,
+        vx: (Math.random() - 0.5) * 0.18,
+        vy: (Math.random() - 0.5) * 0.18,
+        r: 1 + Math.random() * 1.5,
+        color: Math.random() > 0.5 ? 'rgba(123,170,160,' : 'rgba(200,169,126,',
+        opacity: 0.15 + Math.random() * 0.45,
+      });
+    }
+    // Horizontal streams
+    streams = [];
+    const streamCount = 8;
+    for(let i = 0; i < streamCount; i++){
+      streams.push({
+        y: H * (0.08 + (i / streamCount) * 0.88),
+        x: -Math.random() * W,
+        speed: 0.25 + Math.random() * 0.6,
+        width: W * (0.15 + Math.random() * 0.4),
+        height: 1 + Math.random() * 1.5,
+        color: i % 3 === 0 ? 'rgba(200,169,126,' : i % 3 === 1 ? 'rgba(123,170,160,' : 'rgba(155,142,196,',
+        opacity: 0.06 + Math.random() * 0.14,
+        wave: Math.random() * Math.PI * 2,
+        waveSpeed: 0.004 + Math.random() * 0.006,
+        waveAmp: 2 + Math.random() * 6,
+      });
+    }
+    // Rising particles
+    particles = [];
+    for(let i = 0; i < 55; i++){
+      particles.push({
+        x: Math.random() * W,
+        y: H + Math.random() * H,
+        vx: (Math.random() - 0.5) * 0.2,
+        vy: -(0.15 + Math.random() * 0.35),
+        r: 0.5 + Math.random() * 1.2,
+        color: Math.random() > 0.5 ? 'rgba(123,170,160,' : 'rgba(200,169,126,',
+        opacity: 0.08 + Math.random() * 0.3,
+      });
+    }
+  }
+
+  function drawConnections(){
+    const maxDist = 120;
+    for(let i = 0; i < nodes.length; i++){
+      for(let j = i + 1; j < nodes.length; j++){
+        const dx = nodes[i].x - nodes[j].x;
+        const dy = nodes[i].y - nodes[j].y;
+        const dist = Math.sqrt(dx*dx + dy*dy);
+        if(dist < maxDist){
+          const alpha = (1 - dist/maxDist) * 0.08;
+          ctx.beginPath();
+          ctx.moveTo(nodes[i].x, nodes[i].y);
+          ctx.lineTo(nodes[j].x, nodes[j].y);
+          ctx.strokeStyle = `rgba(123,170,160,${alpha})`;
+          ctx.lineWidth = 0.5;
+          ctx.stroke();
+        }
+      }
+      // mouse connections
+      const mdx = nodes[i].x - mouseX;
+      const mdy = nodes[i].y - mouseY;
+      const mdist = Math.sqrt(mdx*mdx + mdy*mdy);
+      if(mdist < 160){
+        const alpha = (1 - mdist/160) * 0.22;
+        ctx.beginPath();
+        ctx.moveTo(nodes[i].x, nodes[i].y);
+        ctx.lineTo(mouseX, mouseY);
+        ctx.strokeStyle = `rgba(200,169,126,${alpha})`;
+        ctx.lineWidth = 0.7;
+        ctx.stroke();
+      }
+    }
+  }
+
+  function draw(){
+    ctx.clearRect(0, 0, W, H);
+
+    // Background gradient
+    const bg = ctx.createRadialGradient(W*0.5, H*0.45, 0, W*0.5, H*0.45, Math.max(W,H)*0.7);
+    bg.addColorStop(0, 'rgba(14,12,24,0.98)');
+    bg.addColorStop(0.4, 'rgba(10,10,18,0.96)');
+    bg.addColorStop(1, 'rgba(9,9,15,0.0)');
+    ctx.fillStyle = bg;
+    ctx.fillRect(0, 0, W, H);
+
+    // Central dual glow
+    const g1 = ctx.createRadialGradient(W*0.38, H*0.42, 0, W*0.38, H*0.42, W*0.38);
+    g1.addColorStop(0, 'rgba(123,170,160,0.07)');
+    g1.addColorStop(1, 'transparent');
+    ctx.fillStyle = g1; ctx.fillRect(0,0,W,H);
+
+    const g2 = ctx.createRadialGradient(W*0.62, H*0.55, 0, W*0.62, H*0.55, W*0.32);
+    g2.addColorStop(0, 'rgba(200,169,126,0.06)');
+    g2.addColorStop(1, 'transparent');
+    ctx.fillStyle = g2; ctx.fillRect(0,0,W,H);
+
+    // Grid
+    ctx.strokeStyle = 'rgba(255,255,255,0.022)';
+    ctx.lineWidth = 0.5;
+    const gridSize = 80;
+    for(let x = 0; x < W; x += gridSize){
+      ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,H); ctx.stroke();
+    }
+    for(let y = 0; y < H; y += gridSize){
+      ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(W,y); ctx.stroke();
+    }
+
+    // Streams
+    streams.forEach(s => {
+      s.wave += s.waveSpeed;
+      s.x += s.speed;
+      if(s.x > W + 200) s.x = -s.width - 100;
+      const yOff = Math.sin(s.wave) * s.waveAmp;
+      const grad = ctx.createLinearGradient(s.x, 0, s.x + s.width, 0);
+      grad.addColorStop(0, s.color + '0)');
+      grad.addColorStop(0.2, s.color + s.opacity + ')');
+      grad.addColorStop(0.8, s.color + s.opacity + ')');
+      grad.addColorStop(1, s.color + '0)');
+      ctx.save();
+      ctx.shadowColor = s.color + '0.6)';
+      ctx.shadowBlur = 6;
+      ctx.fillStyle = grad;
+      ctx.beginPath();
+      ctx.roundRect(s.x, s.y + yOff - s.height/2, s.width, s.height, s.height/2);
+      ctx.fill();
+      ctx.restore();
+    });
+
+    // Network connections
+    drawConnections();
+
+    // Nodes
+    nodes.forEach(n => {
+      n.x += n.vx; n.y += n.vy;
+      if(n.x < 0) n.x = W; if(n.x > W) n.x = 0;
+      if(n.y < 0) n.y = H; if(n.y > H) n.y = 0;
+      ctx.beginPath();
+      ctx.arc(n.x, n.y, n.r, 0, Math.PI*2);
+      ctx.fillStyle = n.color + n.opacity + ')';
+      ctx.fill();
+    });
+
+    // Particles
+    particles.forEach(p => {
+      p.x += p.vx; p.y += p.vy;
+      if(p.y < -10){ p.y = H + 10; p.x = Math.random() * W; }
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.r, 0, Math.PI*2);
+      ctx.fillStyle = p.color + p.opacity + ')';
+      ctx.fill();
+    });
+
+    requestAnimationFrame(draw);
+  }
+
+  window.addEventListener('resize', resize);
+  window.addEventListener('mousemove', e => {
+    const rect = canvas.getBoundingClientRect();
+    mouseX = e.clientX - rect.left;
+    mouseY = e.clientY - rect.top;
+  });
+  resize();
+  draw();
+})();
+
 // Scroll reveal
 const observer = new IntersectionObserver(entries => {
   entries.forEach(e => { if(e.isIntersecting) e.target.classList.add('visible'); });
