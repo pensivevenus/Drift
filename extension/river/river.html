@@ -2,22 +2,41 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Drift — River Map</title>
-    <style>
-      body {
-        background: #0f0f13;
-        color: rgba(240, 240, 245, 0.5);
-        font-family: -apple-system, sans-serif;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        height: 100vh;
-        margin: 0;
-        font-size: 14px;
-      }
-    </style>
+    <link rel="stylesheet" href="river.css" />
   </head>
   <body>
-    <p>River map coming soon — session saved ✓</p>
+    <div id="app">
+      <div id="topbar">
+        <button id="back-btn" onclick="history.back()">← back</button>
+        <div id="session-info">
+          <span id="session-intention"></span>
+          <span id="session-meta"></span>
+        </div>
+        <div id="export-btns">
+          <button class="export-btn" id="export-png">↓ PNG</button>
+          <button class="export-btn" id="export-svg">↓ SVG</button>
+          <button class="export-btn" id="view-history">history</button>
+        </div>
+      </div>
+
+      <div id="canvas-wrap">
+        <div id="loading">loading your session...</div>
+        <canvas id="river-canvas"></canvas>
+        <div id="empty-state" style="display: none">
+          <p>this session has no tracking data</p>
+          <p>make sure the extension was active while browsing</p>
+        </div>
+        <div id="error-state" style="display: none">
+          <p>session not found</p>
+          <a href="history.html">view all sessions →</a>
+        </div>
+      </div>
+
+      <div id="legend"></div>
+    </div>
+
+    <script type="module" src="river.js"></script>
   </body>
 </html>
