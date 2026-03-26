@@ -1,3 +1,4 @@
+import { checkOnboarding } from '../shared/onboarding.js';
 import { createSession } from '../shared/session.js';
 import { KEYS } from '../shared/constants.js';
 
@@ -16,6 +17,7 @@ let timerInterval = null;
 function init() {
   checkExistingSession();
   loadRecentPills();
+  checkOnboarding();
 }
 
 function checkExistingSession() {
