@@ -134,3 +134,9 @@ html, body {
   border-radius: 50%;
   flex-shrink: 0;
 }
+
+a.export-btn {
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+}

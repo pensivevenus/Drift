@@ -86,8 +86,9 @@
         display: flex;
         align-items: center;
         justify-content: space-between;
-        padding: 10px 0;
+        padding: 12px 0;
         border-bottom: 1px solid var(--border);
+        gap: 16px;
       }
       .setting-row:last-child {
         border-bottom: none;
@@ -96,34 +97,92 @@
       .setting-label {
         font-size: 13px;
         color: var(--text);
+        flex: 1;
       }
       .setting-desc {
         font-size: 11px;
         color: var(--muted);
-        margin-top: 2px;
+        margin-top: 3px;
       }
       .setting-control {
         display: flex;
         align-items: center;
         gap: 8px;
+        flex-shrink: 0;
       }
       input[type="range"] {
-        width: 100px;
+        width: 110px;
         accent-color: var(--accent);
+        cursor: pointer;
       }
-      .range-val {
-        font-size: 12px;
+      input[type="number"] {
+        width: 64px;
+        background: var(--bg);
+        border: 1px solid var(--border);
+        color: var(--text);
+        font-size: 13px;
+        padding: 5px 8px;
+        border-radius: 6px;
+        text-align: center;
+        appearance: textfield;
+        -moz-appearance: textfield;
+      }
+      input[type="number"]::-webkit-outer-spin-button,
+      input[type="number"]::-webkit-inner-spin-button {
+        -webkit-appearance: none;
+      }
+      input[type="number"]:focus {
+        outline: none;
+        border-color: var(--accent);
+      }
+      .unit {
+        font-size: 11px;
         color: var(--muted);
-        min-width: 32px;
-        text-align: right;
       }
       select {
         background: var(--bg);
         border: 1px solid var(--border);
         color: var(--text);
         font-size: 12px;
-        padding: 4px 8px;
+        padding: 5px 8px;
         border-radius: 6px;
+        cursor: pointer;
+      }
+      .toggle {
+        position: relative;
+        width: 36px;
+        height: 20px;
+        display: inline-block;
+      }
+      .toggle input {
+        opacity: 0;
+        width: 0;
+        height: 0;
+      }
+      .toggle-slider {
+        position: absolute;
+        inset: 0;
+        background: var(--border);
+        border-radius: 20px;
+        cursor: pointer;
+        transition: background 0.2s;
+      }
+      .toggle-slider::before {
+        content: "";
+        position: absolute;
+        width: 14px;
+        height: 14px;
+        left: 3px;
+        top: 3px;
+        background: white;
+        border-radius: 50%;
+        transition: transform 0.2s;
+      }
+      .toggle input:checked + .toggle-slider {
+        background: var(--accent);
+      }
+      .toggle input:checked + .toggle-slider::before {
+        transform: translateX(16px);
       }
       .danger-btn {
         background: none;
@@ -134,12 +193,21 @@
         padding: 10px 20px;
         cursor: pointer;
         width: 100%;
-        margin-top: 8px;
+        margin-top: 10px;
         transition: all 0.15s;
       }
       .danger-btn:hover {
         background: var(--red);
         color: white;
+      }
+      .default-tag {
+        font-size: 10px;
+        color: var(--muted);
+        background: var(--bg);
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        padding: 1px 7px;
+        margin-left: 6px;
       }
       #saved-toast {
         position: fixed;
@@ -154,6 +222,7 @@
         opacity: 0;
         transition: opacity 0.3s;
         pointer-events: none;
+        z-index: 99;
       }
       #saved-toast.show {
         opacity: 1;
@@ -164,16 +233,18 @@
     <div id="app">
       <div id="topbar">
         <h1>Settings</h1>
-        <a class="back-btn" href="javascript:history.back()">← back</a>
+        <a class="back-btn" href="../newtab/newtab.html">← back</a>
       </div>
 
       <div class="section">
         <div class="section-title">Drift Detection</div>
         <div class="setting-row">
           <div>
-            <div class="setting-label">Tab threshold</div>
+            <div class="setting-label">
+              Tab threshold <span class="default-tag">default 4</span>
+            </div>
             <div class="setting-desc">
-              Number of tabs to open before interrupt fires
+              New tabs opened before interrupt fires
             </div>
           </div>
           <div class="setting-control">
@@ -183,16 +254,17 @@
               min="2"
               max="10"
               value="4"
-              oninput="update('tabs-threshold', 'tabs-val', this.value)"
             />
-            <span class="range-val" id="tabs-val">4</span>
+            <input type="number" id="tabs-num" min="2" max="10" value="4" />
           </div>
         </div>
         <div class="setting-row">
           <div>
-            <div class="setting-label">Time window</div>
+            <div class="setting-label">
+              Time window <span class="default-tag">default 90s</span>
+            </div>
             <div class="setting-desc">
-              Seconds window for counting tab opens
+              Seconds window in which tabs are counted
             </div>
           </div>
           <div class="setting-control">
@@ -203,9 +275,62 @@
               max="180"
               step="10"
               value="90"
-              oninput="update('time-window', 'time-val', this.value + 's')"
             />
-            <span class="range-val" id="time-val">90s</span>
+            <input type="number" id="time-num" min="30" max="180" value="90" />
+            <span class="unit">s</span>
+          </div>
+        </div>
+        <div class="setting-row">
+          <div>
+            <div class="setting-label">
+              Interrupt cooldown <span class="default-tag">default 5 min</span>
+            </div>
+            <div class="setting-desc">
+              Minutes before interrupt can fire again
+            </div>
+          </div>
+          <div class="setting-control">
+            <input type="range" id="cooldown" min="1" max="30" value="5" />
+            <input type="number" id="cooldown-num" min="1" max="30" value="5" />
+            <span class="unit">min</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-title">Time on Site Alert</div>
+        <div class="setting-row">
+          <div>
+            <div class="setting-label">Enable time on site alert</div>
+            <div class="setting-desc">
+              Notify when you've been on one site too long
+            </div>
+          </div>
+          <label class="toggle">
+            <input type="checkbox" id="site-alert-enabled" />
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
+        <div class="setting-row">
+          <div>
+            <div class="setting-label">
+              Alert after <span class="default-tag">default 25 min</span>
+            </div>
+            <div class="setting-desc">
+              Minutes on a single domain before alert fires
+            </div>
+          </div>
+          <div class="setting-control">
+            <input
+              type="range"
+              id="site-duration"
+              min="5"
+              max="60"
+              step="5"
+              value="25"
+            />
+            <input type="number" id="site-num" min="5" max="60" value="25" />
+            <span class="unit">min</span>
           </div>
         </div>
       </div>
@@ -214,13 +339,11 @@
         <div class="section-title">Appearance</div>
         <div class="setting-row">
           <div class="setting-label">Theme</div>
-          <div class="setting-control">
-            <select id="theme-select" onchange="saveSettings()">
-              <option value="auto">Auto</option>
-              <option value="dark">Dark</option>
-              <option value="light">Light</option>
-            </select>
-          </div>
+          <select id="theme-select">
+            <option value="auto">Auto (system)</option>
+            <option value="dark">Dark</option>
+            <option value="light">Light</option>
+          </select>
         </div>
       </div>
 
@@ -230,17 +353,17 @@
           <div>
             <div class="setting-label">Session history</div>
             <div class="setting-desc">
-              Sessions are stored locally for 30 days
+              Stored locally for 30 days, never leaves your device
             </div>
           </div>
         </div>
-        <button class="danger-btn" onclick="clearData()">
+        <button class="danger-btn" id="clear-btn">
           Delete all session data
         </button>
       </div>
     </div>
 
-    <div id="saved-toast">Settings saved</div>
+    <div id="saved-toast">Settings saved ✓</div>
     <script type="module" src="settings.js"></script>
   </body>
 </html>
