@@ -225,49 +225,6 @@ Works on **Chrome · Edge · Brave** (all Chromium-based browsers).
 
 ---
 
-## Repository Structure
-
-```
-drift/
-├── index.html                    ← Landing page
-├── app.html                      ← Web app (Pomodoro + Tasks + Sounds)
-├── enterprise.html               ← For Teams page
-├── assets/
-│   └── backgrounds/              ← 20 animated GIF backgrounds
-└── extension/
-    ├── manifest.json             ← MV3 config
-    ├── newtab/
-    │   ├── newtab.html           ← Intention prompt
-    │   ├── newtab.css
-    │   └── newtab.js             ← Session start · bridge · ambient indicator
-    ├── content/
-    │   ├── tracker.js            ← Injected into every tab — focus/blur events
-    │   ├── interrupt.js          ← Drift overlay injection
-    │   └── interrupt.css
-    ├── background/
-    │   └── service-worker.js     ← Session orchestration · drift detection · alarms
-    ├── river/
-    │   ├── river.html            ← River map page
-    │   ├── river.css
-    │   ├── river.js              ← Entry point
-    │   ├── streamgraph.js        ← Canvas drawing algorithm
-    │   └── export.js             ← PNG + SVG export
-    ├── history/
-    │   ├── history.html          ← Session browser
-    │   └── history.js
-    ├── settings/
-    │   ├── settings.html         ← Sensitivity sliders · data deletion
-    │   └── settings.js
-    └── shared/
-        ├── db.js                 ← IndexedDB wrapper
-        ├── session.js            ← createSession · endSession · addEvent
-        ├── constants.js          ← Thresholds and key names
-        ├── colors.js             ← Domain → colour hash mapping
-        └── onboarding.js         ← First-run onboarding overlay
-```
-
----
-
 ## Data Model
 
 ```javascript
