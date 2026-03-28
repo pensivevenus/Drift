@@ -1,295 +1,347 @@
-# Drift ( the readme will be updated in sometime )
+<div align="center">
 
-> Set your intention. Watch your focus. See the truth.
+<img src="https://raw.githubusercontent.com/pensivevenus/Drift/main/assets/icon128.png" alt="Drift" width="80" height="80" />
 
-Drift is a three-part, fully local focus system that closes the loop between what you meant to do and what you actually did. A **todo + pomodoro web app**, a **browser extension** that watches your attention, and a **river map** that shows you your session honestly — no account, no server, no data leaving your device.
+# DRIFT
 
-![Drift river map — a beautiful visualisation of one focus session](assets/river-demo.svg)
+### *Set your intention. Watch your focus. See the truth.*
 
----
+[![License](https://img.shields.io/badge/license-Apache%202.0-6366f1?style=flat-square)](LICENSE)
+[![GitHub Pages](https://img.shields.io/badge/live-GitHub%20Pages-6366f1?style=flat-square)](https://pensivevenus.github.io/Drift/)
+[![No Backend](https://img.shields.io/badge/backend-none-success?style=flat-square)](#)
+[![No Account](https://img.shields.io/badge/account-never%20required-success?style=flat-square)](#)
+[![FOSS Hack 2026](https://img.shields.io/badge/FOSS%20Hack-2026-6366f1?style=flat-square)](#)
 
-## The Problem
+<br/>
 
-You open a tab to work on something. Forty minutes later you're somewhere else entirely, with no memory of how you got there.
+**[🌊 Open Web App](https://pensivevenus.github.io/Drift/app.html) · [🏠 Landing Page](https://pensivevenus.github.io/Drift/) · [🏢 For Teams](https://pensivevenus.github.io/Drift/enterprise.html)**
 
-Existing tools either block everything (too aggressive) or show guilt-inducing totals like "3 hours on YouTube" long after it's too late to act. Neither addresses the actual moment distraction begins. Drift does.
+<br/>
 
----
+> Drift closes the loop between what you meant to do and what you actually did —  
+> with a focus timer, smart todo system, and attention tracking that never leaves your browser.
 
-## What Drift Does
-
-**1. You set an intention.**
-Open the web app, pick a task from your todo list, and start a session. Or open a new tab directly and type what you're here to do. Either way, Drift knows your goal.
-
-**2. Drift watches silently.**
-The browser extension tracks which tabs you focus on and for how long, using the Page Visibility API — no polling, no performance cost. Everything is processed locally.
-
-**3. If you drift, Drift notices.**
-Open too many tabs too quickly, or spend significant time somewhere unrelated to your intention? A gentle, non-blocking overlay appears: *"You meant to write your essay. You've opened 5 tabs in 30 seconds."* Not an alarm. Not a block. Just a quiet mirror. Keep going or refocus — both are valid.
-
-**4. At the end, you see the river.**
-A full-canvas visualisation of your attention over time. Each domain is a coloured stream. Time flows left to right. The river shows you exactly what your last session looked like. Export it as a PNG or SVG.
+<br/>
 
 ---
 
-## Three Ways to Use Drift
+</div>
 
-Drift is designed to work however you want — you're never forced into one mode.
+## What is Drift?
 
-| Mode | How it works |
-|---|---|
-| **Extension only** | Open a new tab, type your intention, Drift tracks the session. Simple. |
-| **Web app + Extension** | Pick a task in the web app — Drift carries your intention into every new tab automatically via shared localStorage. Session runs until idle or manual end. |
-| **Full flow** | Pick a task, run a pomodoro, Drift tracks your attention during the timer, river map generates when the pomodoro ends. |
+Most productivity tools either **block everything aggressively**, or show you guilt-inducing totals like *"3 hours on YouTube"* long after it's too late to act. Neither addresses the actual moment distraction begins.
+
+**Drift does something different.**
+
+It watches where your attention actually goes — silently, locally, privately — and when your session ends, renders a beautiful **river map**: a visual timeline of your focus, one coloured stream per domain, flowing left to right. No account. No server. No data leaving your browser. Just you, your intention, and an honest record of the session.
+
+```
+Open a new tab  →  Set your intention  →  Work naturally
+     ↓
+Drift detects when you drift  →  Gentle overlay appears
+     ↓
+Session ends  →  River map renders  →  See the truth
+```
+
+---
+
+## Three Parts. One System. Fully Local.
+
+| Part | Description | Link |
+|------|-------------|------|
+| 🌊 **Web App** | Pomodoro timer · Todo list · Lo-fi soundscape · GIF backgrounds | [app.html](https://pensivevenus.github.io/Drift/app.html) |
+| 🧩 **Browser Extension** | New tab override · Attention tracking · Drift detection · River map | `extension/` folder |
+| 🏠 **Landing Page** | Full project overview · Setup guide · Privacy details | [index.html](https://pensivevenus.github.io/Drift/) |
 
 ---
 
 ## Features
 
-### Web App (`app.html`)
+### 🧩 Browser Extension
 
-**Todo list**
-- Add tasks with the Enter key
-- Click to mark complete — animated strikethrough
-- Delete with the × button
-- Completed tasks move to the bottom, never disappear
-- Click any incomplete task to make it your current focus — automatically bridges to the extension
+<details>
+<summary><strong>New Tab Override</strong></summary>
 
-**Pomodoro timer**
-- Default 25-minute work / 5-minute break rhythm
-- Fully custom durations — set work time (5–60 min) and break time (1–30 min)
-- Smooth SVG circular progress ring
-- Start, pause, and reset controls
-- Break timer starts automatically after a work block ends
-- Satisfying completion animation and a soft chime via Web Audio API when a session ends
-- "View your river map →" link appears after each completed work block
+- Replaces Chrome's new tab with a calm intention prompt
+- If a web app session is active, picks it up automatically — shows *"Continuing: your task"*
+- Recent intentions as quick-pick pills (last 5)
+- Skip option for free browsing sessions
+- Ambient session indicator with ticking timer and pulse dot
 
-**Session stats**
-- Pomodoros completed today
-- Total focus minutes today
-- Current daily streak
-- Tasks completed today
-- All stats computed locally — resets at midnight
+</details>
 
-### Browser Extension (`extension/`)
+<details>
+<summary><strong>Attention Tracking</strong></summary>
 
-**Intention prompt (new tab override)**
-- Replaces the browser new tab page with a calm, minimal intention input
-- If a session is already running from the web app, automatically picks it up and shows your current task
-- Recent intentions available as one-click pills
-- Skip option (Esc) for free browsing sessions — never forces the user
+- Page Visibility API fires on every tab focus and blur
+- Records **domain names only** — never full URLs, never page content, never keystrokes
+- `chrome.runtime.sendMessage` routes all events to service worker reliably
+- Complete event log built in IndexedDB throughout the session
 
-**Attention tracking**
-- Page Visibility API — fires on every tab focus and blur, zero polling
-- BroadcastChannel API — all tabs communicate in real time
-- Logs domain names only, never full URLs
-- Ambient indicator in the corner of every new tab: your intention + session timer + a pulse dot
+</details>
 
-**Drift detection + gentle interrupt**
-- Triggers when: 4+ new tabs opened within 90 seconds, OR 10+ minutes on a domain unrelated to your intention
-- Soft overlay — never a full block, never covers the whole page
-- Shows your intention and exactly what triggered the check
-- Two options: "keep going" or "refocus" — no streaks broken, no judgment
-- 5-minute cooldown after dismissal so it never nags
+<details>
+<summary><strong>Drift Detection</strong></summary>
 
-**River map visualisation**
-- Full-canvas stream graph — time on the X axis, domains as coloured bands
-- Width of each band = time spent on that domain
-- Intention label pinned to the left as a reference point
-- Export as PNG or SVG
-- Colour system: same domain always gets the same colour across all sessions
+- **Tab drift** — 4+ new tabs opened within 90 seconds
+- **Domain drift** — 10+ minutes on a domain with no keyword match to your intention
+- Gentle non-blocking overlay injected into the active tab
+- Two response options: *Keep Going* or *Refocus*
+- 5-minute cooldown after dismissal — never nags
 
-**Session history**
-- Browse all past sessions (kept for 30 days)
-- Click any session to re-render its river map
-- See patterns across days
+</details>
 
-**Settings**
-- Adjust drift detection sensitivity (tab threshold + time window)
-- Theme: dark, light, or auto
-- Data export and full data deletion
+<details>
+<summary><strong>River Map</strong></summary>
+
+- Canvas stream graph rendered at session end
+- X axis = time · Each domain = coloured horizontal band
+- Same domain always gets same colour via deterministic hash function
+- Export as **PNG** or **SVG**
+- Session history stored in IndexedDB for 30 days
+
+</details>
 
 ---
 
-## How the Web App and Extension Connect
+### ⏱ Web App (app.html)
 
-There is no server. The bridge is `localStorage`.
+<details>
+<summary><strong>Pomodoro Timer</strong></summary>
 
-When you start a pomodoro or click a task in the web app, it writes three keys:
+- 25/5 work-break rhythm with animated SVG ring
+- Custom durations: 1–120 min work · 1–60 min breaks
+- Work / Short Break / Long Break modes
+- Web Audio API chime on completion — no audio files
+- Session stats: pomodoros today · minutes focused · day streak
+- Intention field bridged to extension via localStorage
 
+</details>
+
+<details>
+<summary><strong>Smart Todo List</strong></summary>
+
+- Add, edit, delete tasks with animated transitions
+- Mark complete with checkbox strikethrough animation
+- Categories: Work · School · Personal
+- Priority levels: High · Medium · Low (colour coded)
+- Due dates with overdue highlighting
+- Subtasks per task · Drag-and-drop reorder · Pin and Star
+- Undo delete (5-second window)
+- Export as `.txt` · Import from `.txt` or `.json`
+
+</details>
+
+<details>
+<summary><strong>Lo-fi Soundscape</strong></summary>
+
+- 6 ambient sounds: Rain · Forest · Ocean · Lo-fi Beats · White Noise · Cafe
+- **All generated via Web Audio API — zero external audio files**
+- Volume slider · Off toggle
+
+</details>
+
+<details>
+<summary><strong>Backgrounds & Stats</strong></summary>
+
+- 20 animated lofi/pixel art GIF backgrounds
+- Press `Space` to cycle to a random background
+- Day streak counter · Tasks done today · All computed locally
+
+</details>
+
+---
+
+## How the Bridge Works
+
+The web app and extension communicate **entirely through localStorage** — no server, no sync service, no WebSockets. Just the browser talking to itself.
+
+```javascript
+// When you start a Pomodoro in app.html:
+localStorage.setItem('drift_active_session', crypto.randomUUID())
+localStorage.setItem('drift_intention',      'write my essay')
+localStorage.setItem('drift_start_time',     Date.now())
+
+// When a new tab opens, the extension reads:
+const session   = localStorage.getItem('drift_active_session')
+const intention = localStorage.getItem('drift_intention')
+// → shows "Continuing: write my essay"
+
+// When the Pomodoro ends:
+localStorage.setItem('drift_session_end', Date.now())
+// → extension triggers river map
 ```
-drift_active_session  →  session id
-drift_intention       →  your task name
-drift_start_time      →  timestamp
-```
-
-When you open a new tab, the extension reads those same keys and picks up the session automatically. When the pomodoro ends, the web app ends the session and passes the session id to `river.html` to render the map.
-
-The web app and extension talk to each other entirely client-side. No sync, no account, no server.
 
 ---
 
 ## Tech Stack
 
-Everything is browser-native. No frameworks, no build tools, no external services.
+Everything is **browser-native**. No frameworks, no libraries, no build tools, no external services.
 
-| Layer | Technology | Purpose |
-|---|---|---|
-| Extension | Manifest V3 | New tab override, content scripts |
-| Cross-tab comms | BroadcastChannel API | Real-time tab event passing |
-| Attention tracking | Page Visibility API | Focus/blur detection, zero polling |
-| Visualisation | Canvas API | River map stream graph |
-| Storage | localStorage + IndexedDB | Live session state + persistent history |
-| Audio | Web Audio API | Completion chime, no audio files |
-| Export | Canvas.toBlob() + SVG draw pass | PNG and SVG export |
-| Hosting | GitHub Pages | Landing page + web app, zero cost |
-| Styling | Vanilla CSS | No framework needed |
-
----
-
-## Project Structure
-
-```
-drift-project/
-│
-├── index.html              # Landing page (GitHub Pages)
-├── app.html                # Web app — todo + pomodoro
-├── app.js                  # Todo logic + pomodoro + localStorage bridge
-├── app.css
-├── landing.css
-│
-├── assets/
-│   ├── river-demo.svg      # Pre-generated river map for landing page
-│   └── demo.gif            # 90-second demo recording
-│
-└── extension/
-    ├── manifest.json
-    │
-    ├── newtab/
-    │   ├── newtab.html     # Intention prompt — new tab override
-    │   ├── newtab.css
-    │   └── newtab.js       # Session start, localStorage bridge read
-    │
-    ├── content/
-    │   ├── tracker.js      # Injected into all tabs — Page Visibility listener
-    │   ├── interrupt.js    # Injects drift overlay into active tab
-    │   └── interrupt.css
-    │
-    ├── background/
-    │   └── service-worker.js  # Drift detection, session orchestration
-    │
-    ├── river/
-    │   ├── river.html      # River map page
-    │   ├── river.css
-    │   ├── river.js        # Entry point — loads session, calls renderer
-    │   ├── streamgraph.js  # Canvas stream graph algorithm
-    │   └── export.js       # PNG + SVG export
-    │
-    ├── history/
-    │   ├── history.html
-    │   └── history.js
-    │
-    ├── settings/
-    │   ├── settings.html
-    │   └── settings.js
-    │
-    └── shared/
-        ├── db.js           # IndexedDB helpers
-        ├── session.js      # Session create/end/query + localStorage key constants
-        ├── colors.js       # Domain → colour mapping
-        └── constants.js    # Drift thresholds, idle timeout, defaults
-```
-
----
-
-## Getting Started
-
-### Web App
-
-No installation needed. Visit the live site:
-
-**[https://your-username.github.io/drift-project](https://your-username.github.io/drift-project)**
-
-Or clone and open `app.html` locally — it works entirely offline.
-
-```bash
-git clone https://github.com/your-username/drift-project
-cd drift-project
-open app.html   # or just drag into your browser
-```
-
-### Browser Extension
-
-The extension is not on the Chrome Web Store — it's open source and loaded directly.
-
-1. Clone the repository (or download the ZIP)
-2. Open Chrome and go to `chrome://extensions`
-3. Enable **Developer mode** (toggle in the top right)
-4. Click **Load unpacked**
-5. Select the `extension/` folder from this repo
-6. Open a new tab — Drift is running
-
-Tested on Chrome, Edge, and Brave. Firefox support coming soon.
+| Layer | Technology |
+|-------|-----------|
+| Extension | Manifest V3 · `chrome.runtime.sendMessage` · `chrome.storage.local` · `chrome.alarms` |
+| Attention tracking | Page Visibility API |
+| Cross-context messaging | `chrome.runtime.sendMessage` (content script → service worker) |
+| Storage | IndexedDB (session history) · localStorage (bridge keys) · `chrome.storage.local` (service worker state) |
+| Visualisation | Canvas API (river map stream graph) |
+| Audio | Web Audio API (zero audio files) |
+| Hosting | GitHub Pages (free · auto-deploy on push) |
 
 ---
 
 ## Privacy
 
-Drift was designed from the ground up to be private by default.
+| What Drift stores | What Drift never stores |
+|-------------------|------------------------|
+| ✅ Domain names (e.g. `youtube.com`) | ❌ Full URLs |
+| ✅ Session timestamps | ❌ Page content |
+| ✅ Your intention text | ❌ Keystrokes |
+| ✅ Todo tasks | ❌ Personal data |
+| ✅ Pomodoro stats | ❌ Analytics or telemetry |
 
-- **No account required.** Ever.
-- **No server.** The web app and extension communicate through `localStorage` — your own browser's memory.
-- **No URLs stored.** Drift only records domain names (e.g. `youtube.com`), never the full URL of any page you visit.
-- **No data leaves your device.** Session history lives in IndexedDB on your machine. Export it or delete it any time from the Settings page.
-- **No analytics, no telemetry, no tracking of any kind.**
-
----
-
-## Why Open Source
-
-Most tools built around focus and attention are SaaS products that collect your usage data to improve their own models. Drift takes the opposite position: your attention data is yours, it should stay on your device, and the code that handles it should be fully transparent and auditable.
-
-Drift is free. Drift is open source. That's not a temporary state — it's the point.
+**All data lives in IndexedDB and localStorage on your device. No account required. Ever.**  
+One button in Settings wipes everything instantly.
 
 ---
 
-## Contributing
-
-Contributions are welcome. If you find a bug, have a feature idea, or want to improve the river map algorithm — open an issue or submit a pull request.
+## Install the Extension
 
 ```bash
-git clone https://github.com/your-username/drift-project
-cd drift-project
-# No build step — open files directly in browser
-# For the extension: load extension/ as unpacked in chrome://extensions
+# 1. Clone the repo
+git clone https://github.com/pensivevenus/Drift.git
+
+# 2. Open Chrome and go to
+chrome://extensions
+
+# 3. Enable Developer Mode (top right toggle)
+
+# 4. Click "Load unpacked" and select the extension/ folder
+
+# 5. Open a new tab — Drift replaces it with the intention prompt
 ```
 
-Please open an issue before starting work on a significant change so we can discuss the approach first.
+Works on **Chrome · Edge · Brave** (all Chromium-based browsers).
+
+---
+
+## Repository Structure
+
+```
+drift/
+├── index.html                    ← Landing page
+├── app.html                      ← Web app (Pomodoro + Tasks + Sounds)
+├── enterprise.html               ← For Teams page
+├── assets/
+│   └── backgrounds/              ← 20 animated GIF backgrounds
+└── extension/
+    ├── manifest.json             ← MV3 config
+    ├── newtab/
+    │   ├── newtab.html           ← Intention prompt
+    │   ├── newtab.css
+    │   └── newtab.js             ← Session start · bridge · ambient indicator
+    ├── content/
+    │   ├── tracker.js            ← Injected into every tab — focus/blur events
+    │   ├── interrupt.js          ← Drift overlay injection
+    │   └── interrupt.css
+    ├── background/
+    │   └── service-worker.js     ← Session orchestration · drift detection · alarms
+    ├── river/
+    │   ├── river.html            ← River map page
+    │   ├── river.css
+    │   ├── river.js              ← Entry point
+    │   ├── streamgraph.js        ← Canvas drawing algorithm
+    │   └── export.js             ← PNG + SVG export
+    ├── history/
+    │   ├── history.html          ← Session browser
+    │   └── history.js
+    ├── settings/
+    │   ├── settings.html         ← Sensitivity sliders · data deletion
+    │   └── settings.js
+    └── shared/
+        ├── db.js                 ← IndexedDB wrapper
+        ├── session.js            ← createSession · endSession · addEvent
+        ├── constants.js          ← Thresholds and key names
+        ├── colors.js             ← Domain → colour hash mapping
+        └── onboarding.js         ← First-run onboarding overlay
+```
+
+---
+
+## Data Model
+
+```javascript
+// IndexedDB — drift_db — object store: sessions
+Session {
+  id:        string   // UUID
+  intention: string   // "write my essay"
+  startTime: number   // timestamp
+  endTime:   number   // timestamp
+  events:    Event[]  // full attention timeline
+  interrupts: number  // how many times drift was detected
+}
+
+Event {
+  type:      "open" | "focus" | "blur"
+  domain:    string   // "youtube.com" — never full URL
+  timestamp: number
+  tabId:     string   // internal tracking ID
+}
+```
+
+---
+
+## Known Bugs Fixed
+
+During development we encountered and resolved 13 documented problems. Highlights:
+
+| # | Problem | Root Cause | Fix |
+|---|---------|------------|-----|
+| 4 | BroadcastChannel not received by service worker | MV3 service workers sleep between events | Replaced with `chrome.runtime.sendMessage` |
+| 7 | `Could not establish connection` on session start | Service worker asleep when message fired | Added ping-first wake pattern |
+| 10 | Interrupt not firing — tab ID mismatch | Stored internal UUID instead of Chrome's integer tab ID | Capture `sender.tab.id` in `onMessage` listener |
+| 11 | Drag-drop drop does nothing | Used filtered array indices instead of task ID lookup | Pass task ID via `dataTransfer`, resolve by ID in master array |
+
+Full problem log in [drift_documentation.pdf](./drift_documentation.pdf).
 
 ---
 
 ## Roadmap
 
-- [ ] Firefox extension support (Manifest V2 fallback)
-- [ ] Weekly summary view — river maps across 7 days
-- [ ] Shareable river map links (optional, user-initiated)
-- [ ] Keyboard shortcuts for common actions
-- [ ] Import/export full session history as JSON
+- [ ] **PWA** — offline support + install to desktop
+- [ ] **Real ambient audio** — replace Web Audio synthesis with recordings
+- [ ] **Slack integration** — auto-set status during focus sessions
+- [ ] **Calendar triggers** — auto-start session from Google Calendar focus blocks
+- [ ] **Firefox port** — WebExtensions API compatibility
+- [ ] **Opt-in team dashboard** — aggregate river maps, fully opt-in, no surveillance
+- [ ] **GitHub commit linking** — match focus sessions to code output
+
+---
+
+## Philosophy
+
+- **No account required** — ever
+- **No server, no backend, no external APIs** — zero
+- **All data stays on your device** — always
+- **Domain names only** — no full URLs, no page content, no keystrokes
+- **Fully open source** — Apache 2.0, fork it, own it, extend it
 
 ---
 
 ## License
 
-Apache License 2.0 — see [LICENSE](LICENSE) for details.
+Apache 2.0 — see [LICENSE](LICENSE) for details.
 
-You are free to use, modify, and distribute this project. If you distribute a modified version, you must include a copy of the Apache 2.0 license and state the changes you made. See the full license for details.
-
----
-
-## Acknowledgements
-
-Built during FOSS Hack 2026. Uses only browser-native APIs — no external libraries, no dependencies, no build tools. Just the web platform doing what it was built to do. Licensed under Apache 2.0.
+You can use this commercially, modify it, distribute it. The only requirements are preserving copyright notices and the Apache 2.0 license text.
 
 ---
 
-*Drift doesn't try to fix you. It just shows you what you did, so you can decide if that's what you want.*
+<div align="center">
+
+**Built with intention at FOSS Hack 2026**
+
+[🌊 Open Web App](https://pensivevenus.github.io/Drift/app.html) · [🏠 Landing Page](https://pensivevenus.github.io/Drift/) · [🏢 For Teams](https://pensivevenus.github.io/Drift/enterprise.html) · [⭐ Star on GitHub](https://github.com/pensivevenus/Drift)
+
+*No backend. No tracking. No account. Apache 2.0.*
+
+</div>
