@@ -140,3 +140,68 @@ a.export-btn {
   display: inline-flex;
   align-items: center;
 }
+/* ── Focus Score ─────────────────────────────────────────── */
+#focus-score {
+  display: flex;
+  align-items: flex-start;
+  gap: 24px;
+  flex-shrink: 0;
+  padding: 16px 20px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+}
+
+.score-ring-wrap { flex-shrink: 0; }
+
+.score-ring { width: 80px; height: 80px; }
+
+.score-details { flex: 1; min-width: 0; }
+
+.score-label-text {
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  font-family: 'DM Mono', 'Courier New', monospace;
+}
+
+.score-subtitle {
+  font-size: 10px;
+  color: var(--tertiary);
+  margin-bottom: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.score-breakdown { display: flex; flex-direction: column; gap: 5px; }
+
+.breakdown-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 11px;
+  color: var(--muted);
+}
+
+.breakdown-name { width: 110px; flex-shrink: 0; }
+
+.breakdown-bar-wrap {
+  flex: 1;
+  height: 3px;
+  background: var(--border);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.breakdown-bar {
+  height: 100%;
+  border-radius: 2px;
+  transition: width 1s cubic-bezier(.4,0,.2,1);
+}
+
+.breakdown-val {
+  width: 32px;
+  text-align: right;
+  flex-shrink: 0;
+  color: var(--tertiary);
+}

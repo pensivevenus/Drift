@@ -2,6 +2,47 @@ import { IDLE_TIMEOUT } from '../shared/constants.js';
 import { endSession } from '../shared/session.js';
 import { addEventToSession, getSession, saveSession } from '../shared/db.js';
 
+// ── shared interrupt sender — injects interrupt.js first, then sends ─────────
+async function sendInterrupt(payload) {
+  try {
+    const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
+    if (!tabs.length) return false;
+
+    const tab = tabs[0];
+    const url = tab.url || '';
+
+    // Cannot inject into chrome:// or extension pages
+    if (
+      url.startsWith('chrome://') ||
+      url.startsWith('chrome-extension://') ||
+      url.startsWith('about:') ||
+      url === ''
+    ) {
+      console.log('[Drift] Cannot inject interrupt into:', url);
+      return false;
+    }
+
+    // Force-inject interrupt.js — if already injected, error is caught and ignored
+    try {
+      await chrome.scripting.executeScript({
+        target: { tabId: tab.id },
+        files: ['content/interrupt.js']
+      });
+    } catch (_) {
+      // Already injected — safe to ignore
+    }
+
+    // Small delay to let script initialise
+    await new Promise(r => setTimeout(r, 120));
+
+    await chrome.tabs.sendMessage(tab.id, payload);
+    return true;
+  } catch (e) {
+    console.log('[Drift] Could not send interrupt:', e.message);
+    return false;
+  }
+}
+
 // ── receive all messages ──────────────────────────────────
 chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
   if (msg.type === 'ping') {
@@ -15,7 +56,8 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
       active_intention: msg.intention,
       start_time: msg.startTime,
       tab_open_timestamps: [],
-      last_interrupt_time: 0,
+      last_tab_interrupt_time: 0,
+      last_site_interrupt_time: 0,
       last_focused_domain: null,
       last_focus_time: null,
       last_event_time: Date.now(),
@@ -82,7 +124,7 @@ async function handleTabOpen(msg) {
     tabId: msg.tabId,
   });
 
-  await checkDrift();
+  await checkTabDrift();
 }
 
 // ── focus event ───────────────────────────────────────────
@@ -93,7 +135,7 @@ async function handleFocus(msg) {
   await chrome.storage.local.set({
     last_event_time: Date.now(),
     last_focused_domain: msg.domain,
-    last_focus_time: msg.timestamp,
+    last_focus_time: Date.now(),
   });
 
   await addEventToSession(active_session_id, {
@@ -104,9 +146,8 @@ async function handleFocus(msg) {
   });
 
   console.log('focus:', msg.domain);
-
-  // schedule time-on-site check
-  chrome.alarms.create('siteCheck', { periodInMinutes: 1 });
+  // siteCheck alarm disabled — site time alerts are off for now
+  // chrome.alarms.create('siteCheck', { periodInMinutes: 1 });
 }
 
 // ── blur event ────────────────────────────────────────────
@@ -126,79 +167,56 @@ async function handleBlur(msg) {
   console.log('blur:', msg.domain);
 }
 
-// ── drift detection ───────────────────────────────────────
-async function checkDrift() {
+// ── tab drift detection (fires on tab open) ───────────────
+async function checkTabDrift() {
   const data = await chrome.storage.local.get([
     'active_session_id', 'active_intention', 'tab_open_timestamps',
-    'last_interrupt_time', 'last_focused_domain', 'last_focus_time',
-    'drift_settings'
+    'last_tab_interrupt_time', 'drift_settings'
   ]);
 
   const {
     active_session_id,
     active_intention,
     tab_open_timestamps = [],
-    last_interrupt_time = 0,
-    last_focused_domain,
-    last_focus_time,
+    last_tab_interrupt_time = 0,
     drift_settings = {},
   } = data;
 
   if (!active_session_id) return;
 
   const cooldownMs = (drift_settings.cooldownMins || 5) * 60000;
-  if (Date.now() - last_interrupt_time < cooldownMs) return;
+  if (Date.now() - last_tab_interrupt_time < cooldownMs) return;
 
-  const tabDrift = await detectTabDrift(tab_open_timestamps);
-  const domainDrift = detectDomainDrift(last_focused_domain, active_intention, last_focus_time);
+  const threshold = drift_settings.tabsThreshold || 4;
+  const windowMs  = (drift_settings.timeWindow || 90) * 1000;
+  const recent    = tab_open_timestamps.filter(t => Date.now() - t < windowMs);
 
-  if (!tabDrift && !domainDrift) return;
+  console.log('Tab drift check —', recent.length, 'tabs in window, threshold:', threshold);
 
-  const recentOpens = tab_open_timestamps.filter(t => Date.now() - t < 90000).length;
-  const secondsWindow = tab_open_timestamps.length > 0
-    ? Math.round((Date.now() - tab_open_timestamps[0]) / 1000)
-    : 0;
+  if (recent.length < threshold) return;
 
-  console.log('Drift detected — tabs:', tabDrift, 'domain:', domainDrift);
+  const secondsWindow = Math.round(windowMs / 1000);
+  console.log('Tab drift detected —', recent.length, 'tabs in', secondsWindow, 's');
 
-  try {
-    const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
-    if (!tabs[0]) return;
+  // Tab drift message — clearly says how many tabs in how many seconds
+  const sent = await sendInterrupt({
+    type: 'show_interrupt',
+    intention: active_intention,
+    tabCount: recent.length,
+    seconds: secondsWindow,
+    reason: 'tabs',
+    message: `You've opened ${recent.length} tabs in the last ${secondsWindow} seconds`,
+  });
 
-    await chrome.tabs.sendMessage(tabs[0].id, {
-      type: 'show_interrupt',
-      intention: active_intention,
-      tabCount: recentOpens,
-      seconds: secondsWindow,
-      reason: tabDrift ? 'tabs' : 'domain',
-    });
-
-    await chrome.storage.local.set({ last_interrupt_time: Date.now() });
+  if (sent) {
+    await chrome.storage.local.set({ last_tab_interrupt_time: Date.now() });
 
     const session = await getSession(active_session_id);
     if (session) {
       session.interrupts = (session.interrupts || 0) + 1;
       await saveSession(session);
     }
-  } catch (e) {
-    console.log('Could not send interrupt:', e.message);
   }
-}
-
-async function detectTabDrift(timestamps) {
-  const { drift_settings = {} } = await chrome.storage.local.get('drift_settings');
-  const threshold = drift_settings.tabsThreshold || 4;
-  const window_ = (drift_settings.timeWindow || 90) * 1000;
-  const recent = timestamps.filter(t => Date.now() - t < window_);
-  return recent.length >= threshold;
-}
-
-function detectDomainDrift(domain, intention, focusStart) {
-  if (!domain || !intention || !focusStart) return false;
-  if (Date.now() - focusStart < 600000) return false;
-  const words = intention.toLowerCase().split(/\s+/);
-  const domainLower = domain.toLowerCase();
-  return !words.some(word => word.length > 2 && domainLower.includes(word));
 }
 
 // ── session end ───────────────────────────────────────────
@@ -210,13 +228,15 @@ async function handleEndSession(sessionId) {
   console.log('Drift session ended:', id);
 }
 
-// ── idle detection ────────────────────────────────────────
+// ── alarms ────────────────────────────────────────────────
 chrome.runtime.onInstalled.addListener(() => {
   chrome.alarms.create('idleCheck', { periodInMinutes: 2 });
   console.log('Drift installed — idle check alarm set');
 });
 
 chrome.alarms.onAlarm.addListener(async (alarm) => {
+
+  // ── idle check ────────────────────────────────────────
   if (alarm.name === 'idleCheck') {
     const { last_event_time, active_session_id } =
       await chrome.storage.local.get(['last_event_time', 'active_session_id']);
@@ -234,43 +254,9 @@ chrome.alarms.onAlarm.addListener(async (alarm) => {
     }
   }
 
+  // ── site time check ── DISABLED for now ──────────────────
   if (alarm.name === 'siteCheck') {
-    const data = await chrome.storage.local.get([
-      'drift_settings', 'last_focused_domain',
-      'last_focus_time', 'active_session_id', 'last_interrupt_time'
-    ]);
-
-    const { drift_settings = {}, last_focused_domain, last_focus_time,
-            active_session_id, last_interrupt_time = 0 } = data;
-
-    if (!active_session_id) return;
-    if (!drift_settings.siteAlertEnabled) return;
-
-    const cooldownMs = (drift_settings.cooldownMins || 5) * 60000;
-    if (Date.now() - last_interrupt_time < cooldownMs) return;
-
-    const limitMs = (drift_settings.siteDurationMins || 25) * 60000;
-    if (!last_focus_time) return;
-
-    const timeOnSite = Date.now() - last_focus_time;
-    console.log('Site check — time on site:', Math.round(timeOnSite / 60000), 'min, limit:', drift_settings.siteDurationMins || 25, 'min');
-
-    if (timeOnSite > limitMs) {
-      const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
-      if (!tabs[0]) return;
-      try {
-        await chrome.tabs.sendMessage(tabs[0].id, {
-          type: 'show_interrupt',
-          intention: `You've been on ${last_focused_domain} for over ${drift_settings.siteDurationMins || 25} minutes`,
-          tabCount: 0,
-          seconds: 0,
-          reason: 'site_time',
-        });
-        await chrome.storage.local.set({ last_interrupt_time: Date.now() });
-        console.log('Site time alert sent for', last_focused_domain);
-      } catch (e) {
-        console.log('Could not send site alert:', e.message);
-      }
-    }
+    // Site time alerts are disabled — tab drift only
+    return;
   }
 });
