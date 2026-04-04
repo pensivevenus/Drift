@@ -59,8 +59,6 @@ export function drawRiverMap(ctx, session, canvas) {
   const domains = getUniqueDomains(segments);
   const domainCount = domains.length;
 
-  // Time range: use the actual span of events, not session start/end
-  // This makes bands fill the canvas properly
   const allStarts = segments.map(s => s.start);
   const allEnds   = segments.map(s => s.end);
   const timeMin   = Math.min(...allStarts);
@@ -69,25 +67,25 @@ export function drawRiverMap(ctx, session, canvas) {
 
   if (totalDuration <= 0) return;
 
-  // Layout
+  // Layout — extra top padding so labels sit above bars with room
+  const LABEL_H    = 16;  // px reserved above each band for the label
   const PAD_TOP    = 48;
   const PAD_BOTTOM = 24;
   const PAD_LEFT   = 12;
   const PAD_RIGHT  = 12;
-  const BAND_GAP   = 6;
+  const BAND_GAP   = LABEL_H + 8;  // gap includes label space
 
   const drawW = W - PAD_LEFT - PAD_RIGHT;
   const drawH = H - PAD_TOP - PAD_BOTTOM;
 
-  // Each domain gets an equal horizontal row
-  const rowH    = Math.floor((drawH - BAND_GAP * (domainCount - 1)) / domainCount);
-  const bandH   = Math.max(16, Math.min(48, rowH));   // clamp: at least 16px, at most 48px
-  const scale   = drawW / totalDuration;
+  const rowH  = Math.floor((drawH - BAND_GAP * (domainCount - 1)) / domainCount);
+  const bandH = Math.max(16, Math.min(48, rowH - LABEL_H));
+  const scale = drawW / totalDuration;
 
-  // Map domain → Y start of its row
+  // Map domain → Y start of its BAR (label sits above this)
   const domainY = {};
   domains.forEach((d, i) => {
-    domainY[d] = PAD_TOP + i * (bandH + BAND_GAP);
+    domainY[d] = PAD_TOP + i * (bandH + BAND_GAP) + LABEL_H;
   });
 
   // --- Intention label ---
@@ -101,10 +99,22 @@ export function drawRiverMap(ctx, session, canvas) {
   for (let i = 0; i <= 8; i++) {
     const x = PAD_LEFT + (i / 8) * drawW;
     ctx.beginPath();
-    ctx.moveTo(x, PAD_TOP - 4);
+    ctx.moveTo(x, PAD_TOP);
     ctx.lineTo(x, PAD_TOP + domainCount * (bandH + BAND_GAP));
     ctx.stroke();
   }
+
+  // --- Domain labels ABOVE each row ---
+  ctx.font = '11px -apple-system, BlinkMacSystemFont, sans-serif';
+  for (const domain of domains) {
+    const y = domainY[domain];
+    const color = getDomainColor(domain);
+    ctx.fillStyle = color;
+    ctx.globalAlpha = 0.75;
+    // Draw label just above the bar (y - 4 sits on the baseline above the bar top)
+    ctx.fillText(getDomainLabel(domain), PAD_LEFT + 4, y - 4);
+  }
+  ctx.globalAlpha = 1;
 
   // --- Draw segments as horizontal bands ---
   for (const seg of segments) {
@@ -120,38 +130,53 @@ export function drawRiverMap(ctx, session, canvas) {
     ctx.beginPath();
     ctx.moveTo(x + r, y);
     ctx.lineTo(x + w - r, y);
-    ctx.quadraticCurveTo(x + w, y,        x + w, y + r);
+    ctx.quadraticCurveTo(x + w, y,         x + w, y + r);
     ctx.lineTo(x + w, y + bandH - r);
-    ctx.quadraticCurveTo(x + w, y + bandH, x + w - r, y + bandH);
+    ctx.quadraticCurveTo(x + w, y + bandH,  x + w - r, y + bandH);
     ctx.lineTo(x + r,  y + bandH);
-    ctx.quadraticCurveTo(x,     y + bandH, x,      y + bandH - r);
+    ctx.quadraticCurveTo(x,     y + bandH,  x,      y + bandH - r);
     ctx.lineTo(x,      y + r);
-    ctx.quadraticCurveTo(x,     y,         x + r,  y);
+    ctx.quadraticCurveTo(x,     y,           x + r,  y);
     ctx.closePath();
     ctx.fill();
   }
 
   ctx.globalAlpha = 1;
+}
 
-  // --- Domain labels inside each row ---
-  ctx.font = '11px -apple-system, BlinkMacSystemFont, sans-serif';
-  for (const domain of domains) {
-    const y = domainY[domain];
-    const color = getDomainColor(domain);
-    ctx.fillStyle = color;
-    ctx.globalAlpha = 0.75;
-    ctx.fillText(getDomainLabel(domain), PAD_LEFT + 6, y + bandH - 5);
+// Merge overlapping time intervals so parallel tabs don't double-count
+function mergeIntervals(intervals) {
+  if (!intervals.length) return [];
+  const sorted = [...intervals].sort((a, b) => a.start - b.start);
+  const merged = [{ ...sorted[0] }];
+  for (let i = 1; i < sorted.length; i++) {
+    const last = merged[merged.length - 1];
+    if (sorted[i].start <= last.end) {
+      last.end = Math.max(last.end, sorted[i].end);
+    } else {
+      merged.push({ ...sorted[i] });
+    }
   }
-
-  ctx.globalAlpha = 1;
+  return merged;
 }
 
 export function buildLegend(session) {
   const segments = processEvents(session);
-  const totals = {};
+
+  // Group raw segments by domain
+  const byDomain = {};
   for (const seg of segments) {
-    totals[seg.domain] = (totals[seg.domain] || 0) + seg.duration;
+    if (!byDomain[seg.domain]) byDomain[seg.domain] = [];
+    byDomain[seg.domain].push({ start: seg.start, end: seg.end });
   }
+
+  // Merge overlaps per domain then sum actual wall-clock time
+  const totals = {};
+  for (const [domain, intervals] of Object.entries(byDomain)) {
+    const merged = mergeIntervals(intervals);
+    totals[domain] = merged.reduce((sum, iv) => sum + (iv.end - iv.start), 0);
+  }
+
   return Object.entries(totals)
     .sort((a, b) => b[1] - a[1])
     .map(([domain, ms]) => ({
